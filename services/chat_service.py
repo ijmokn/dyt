@@ -9,7 +9,9 @@ APIs, models, or workers without changing UI code.
 from __future__ import annotations
 
 from typing import Optional, Callable
-from workers.task import submit
+from PySide6.QtCore import QThreadPool
+
+from workers.task import Worker
 
 
 class ChatService:
@@ -19,6 +21,10 @@ class ChatService:
     return results via callbacks/signals. This stub provides the same
     deterministic responses as the previous `_mock_reply` function.
     """
+
+    def __init__(self) -> None:
+        # Keep QRunnable wrappers alive until their signals finish.
+        self._workers = []
 
     def get_reply(self, user_input: str, active_skill_id: Optional[str], active_skill_name: str) -> str:
         """Return a reply string for the given input and active skill."""
@@ -61,7 +67,16 @@ class ChatService:
         def _run(u: str, a_id: Optional[str], a_name: str) -> str:
             return self.get_reply(u, a_id, a_name)
 
-        worker = submit(_run, user_input, active_skill_id, active_skill_name)
+        worker = Worker(_run, user_input, active_skill_id, active_skill_name)
+        self._workers.append(worker)
+
+        def _release_worker(*_args) -> None:
+            if worker in self._workers:
+                self._workers.remove(worker)
+
         worker.signals.finished.connect(lambda result: callback(result))
+        worker.signals.finished.connect(_release_worker)
         if errback:
             worker.signals.error.connect(lambda exc: errback(exc))
+        worker.signals.error.connect(_release_worker)
+        QThreadPool.globalInstance().start(worker)

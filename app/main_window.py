@@ -42,17 +42,13 @@ class MainWindow(QMainWindow):
         self.login_anchor.setFixedSize(38, 38)
         self.login_anchor.clicked.connect(self._handle_user_request)
         self.login_anchor.setProperty("theme", self.state.theme)
-        self.state.theme_changed.connect(lambda v: self.login_anchor.setProperty("theme", v))
+        self.state.theme_changed.connect(self._apply_login_anchor_theme)
         # update anchor display when login state or user name changes
         self.state.user_name_changed.connect(lambda v: self._update_login_anchor())
         self.state.logged_in_changed.connect(lambda v: self._update_login_anchor())
         self._update_login_anchor()
         # react when anchor sizing config changes
         self.state.anchor_config_changed.connect(self._position_anchors)
-        # make anchor a floating tool window so it stays above central widget
-        self.login_anchor.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
-        self.login_anchor.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
-        self.login_anchor.show()
 
         self.root_stack = QStackedLayout()
         self.root_stack.setContentsMargins(0, 0, 0, 0)
@@ -121,35 +117,38 @@ class MainWindow(QMainWindow):
                 # after login, show popup
                 self._show_user_popup()
         else:
-            self._show_user_popup()
+            self._toggle_user_popup()
+
+    def _toggle_user_popup(self) -> None:
+        """Toggle the user popup from the bottom-left login anchor."""
+        if self.user_popup is not None and self.user_popup.isVisible():
+            self.user_popup.hide()
+            return
+        self._show_user_popup()
 
     def _show_user_popup(self) -> None:
         if self.user_popup is None:
             self.user_popup = UserPopup(self.state, self)
             self.user_popup.setProperty("theme", self.state.theme)
             self.state.theme_changed.connect(lambda v: self.user_popup.setProperty("theme", v))
-        # position anchored to the login button: compute global position from the anchor
-        # use mapToGlobal on the anchor's rect to get a reliable global point
         anchor_geo = self.login_anchor.geometry()
-        anchor_global = self.login_anchor.mapToGlobal(self.login_anchor.rect().topLeft())
-        popup_w = self.user_popup.width()
-        popup_h = self.user_popup.height()
+        margin_x = max(18, int(self.width() * (24 / 1100)))
+        margin_y = max(16, int(self.height() * (28 / 760)))
+        gap = max(8, int(self.height() * (8 / 760)))
 
-        # prefer showing above the anchor, centered horizontally to the anchor
-        anchor_center_x = anchor_global.x() + anchor_geo.width() // 2
-        x = anchor_center_x - popup_w // 2
-        y = anchor_global.y() - popup_h - 8  # 8px gap above the anchor
+        popup_w = min(max(int(self.width() * (240 / 1100)), 220), 320)
+        popup_h = min(max(int(self.height() * (120 / 760)), 112), 160)
+        self.user_popup.setFixedSize(popup_w, popup_h)
 
-        # screen boundary checks (use available desktop geometry)
-        from PySide6.QtWidgets import QApplication
-        screen_geo = QApplication.primaryScreen().availableGeometry()
-        if x + popup_w > screen_geo.x() + screen_geo.width() - 8:
-            x = screen_geo.x() + screen_geo.width() - popup_w - 8
-        if x < screen_geo.x() + 8:
-            x = screen_geo.x() + 8
-        if y < screen_geo.y() + 8:
-            # not enough space above, show below the anchor instead
-            y = anchor_global.y() + anchor_geo.height() + 8
+        x = max(margin_x, anchor_geo.x())
+        y = anchor_geo.y() - popup_h - gap
+        if y < margin_y:
+            y = anchor_geo.y() + anchor_geo.height() + gap
+
+        x = min(x, self.width() - popup_w - margin_x)
+        y = min(y, self.height() - popup_h - margin_y)
+        x = max(margin_x, x)
+        y = max(margin_y, y)
 
         self.user_popup.setGeometry(x, y, popup_w, popup_h)
         self.user_popup.show()
@@ -189,12 +188,45 @@ class MainWindow(QMainWindow):
         # update inline style for radius and font-size to match computed size
         radius = max(1, size // 2)
         font_pt = max(8, int(size * self.state.anchor_font_ratio))
-        # only set radius and font-size here; other visual properties come from QSS
-        self.login_anchor.setStyleSheet(f"border-radius: {radius}px; font-size: {font_pt}pt;")
+        self._style_login_anchor(radius, font_pt)
 
-        x = geo.x() + 24
-        y = geo.y() + geo.height() - size - 28
+        x = 24
+        y = self.height() - size - 28
         self.login_anchor.move(x, y)
+        self.login_anchor.raise_()
+
+    def _apply_login_anchor_theme(self, theme: str) -> None:
+        """Refresh the login anchor when the app theme changes."""
+        self.login_anchor.setProperty("theme", theme)
+        self._position_anchors()
+
+    def _style_login_anchor(self, radius: int, font_pt: int) -> None:
+        """Apply size and theme colors for the bottom-left login anchor."""
+        if self.state.theme == "dark":
+            bg = "rgba(19,29,47,0.96)"
+            border = "rgba(85,120,177,0.34)"
+            color = "#d9e7ff"
+            hover_bg = "rgba(30,109,255,0.22)"
+        else:
+            bg = "#ffffff"
+            border = "#d4e3fb"
+            color = "#163a73"
+            hover_bg = "#eff6ff"
+
+        self.login_anchor.setStyleSheet(f"""
+        QPushButton#LoginAnchor {{
+            background: {bg};
+            border: 1px solid {border};
+            border-radius: {radius}px;
+            color: {color};
+            font-weight: 700;
+            font-size: {font_pt}pt;
+            text-align: center;
+        }}
+        QPushButton#LoginAnchor:hover {{
+            background: {hover_bg};
+        }}
+        """)
 
     def _update_login_anchor(self) -> None:
         """Update the circular anchor to show initial or default icon."""
@@ -203,7 +235,7 @@ class MainWindow(QMainWindow):
             self.login_anchor.setText(initial)
         else:
             # use a person glyph as placeholder
-            self.login_anchor.setText("人")
+            self.login_anchor.setText("\u672a")
         # ensure styling re-applies
         self.login_anchor.style().unpolish(self.login_anchor)
         self.login_anchor.style().polish(self.login_anchor)

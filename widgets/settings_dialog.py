@@ -124,6 +124,7 @@ class SettingsDialog(QDialog):
     def __init__(self, state: AppState, parent=None) -> None:
         super().__init__(parent)
         self.state = state
+        self._capture_saved_state()
         # Expose current theme to allow QSS selectors like #SettingsDialog[theme="dark"]
         self.setProperty("theme", self.state.theme)
         self.state.theme_changed.connect(lambda v: self.setProperty("theme", v))
@@ -133,6 +134,7 @@ class SettingsDialog(QDialog):
         self.setWindowTitle("J-Mate 设置")
         self.setObjectName("SettingsDialog")
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setMinimumWidth(760)
         # 构建 UI：将所有控件分组并布局到对话框中
         # 这里把 UI 构建逻辑单独放在 `_build_ui`，便于维护和测试
@@ -169,10 +171,10 @@ class SettingsDialog(QDialog):
         theme_title.setObjectName("SettingsGroupTitle")
 
         self.theme_select = ArrowComboBox(THEME_OPTIONS, self.state.theme)
-        self.theme_select.current_changed.connect(self._update_state)
+        self.theme_select.current_changed.connect(self._preview_state)
 
         self.font_select = ArrowComboBox(FONT_OPTIONS, self.state.font_size)
-        self.font_select.current_changed.connect(self._update_state)
+        self.font_select.current_changed.connect(self._preview_state)
 
         theme_layout.addWidget(theme_title, 0, 0, 1, 2)
         theme_layout.addWidget(QLabel("主题风格"), 1, 0)
@@ -187,7 +189,7 @@ class SettingsDialog(QDialog):
         input_title.setObjectName("SettingsGroupTitle")
         self.enter_toggle = QCheckBox("Enter 直接发送，Shift+Enter 换行")
         self.enter_toggle.setChecked(self.state.enter_to_send)
-        self.enter_toggle.toggled.connect(self._update_state)
+        self.enter_toggle.toggled.connect(self._preview_state)
         input_layout.addWidget(input_title)
         input_layout.addWidget(self.enter_toggle)
 
@@ -204,7 +206,7 @@ class SettingsDialog(QDialog):
         for index, skill in enumerate(DEFAULT_SKILLS):
             check = QCheckBox(f"{skill.icon} {skill.name}")
             check.setChecked(skill.id in self.state.enabled_skill_ids)
-            check.toggled.connect(self._update_state)
+            check.toggled.connect(self._preview_state)
             self.skill_checks[skill.id] = check
             skill_layout.addWidget(check, index // 2 + 1, index % 2)
 
@@ -227,7 +229,7 @@ class SettingsDialog(QDialog):
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
         buttons.button(QDialogButtonBox.StandardButton.Ok).setText("完成")
-        buttons.accepted.connect(self.accept)
+        buttons.accepted.connect(self._save_settings)
         # 底部按钮区域：负责确认/完成操作。
         # 在截图中，完成/发送相关按钮位于对话框的右下角，用户点击"完成"会触发 accept()
 
@@ -262,8 +264,8 @@ class SettingsDialog(QDialog):
             title_color = "#cfe6ff"
             text_color = "#cfe6ff"
             note_color = "#a9c9ff"
-            button_bg = "#12314f"
-            button_fg = "#cfe6ff"
+            button_bg = "#1E6DFF"
+            button_fg = "#ffffff"
         else:
             dialog_bg = "#f6f9ff"
             group_bg = "#ffffff"
@@ -271,12 +273,12 @@ class SettingsDialog(QDialog):
             title_color = "#174381"
             text_color = "#12283b"
             note_color = "#4b6ea6"
-            button_bg = "#ffffff"
-            button_fg = "#174381"
+            button_bg = "#1E6DFF"
+            button_fg = "#ffffff"
 
         qss = f"""
         QDialog#SettingsDialog {{
-            background: {dialog_bg};
+            background: transparent;
         }}
         QFrame#SettingsGroup {{
             background: {group_bg};
@@ -299,17 +301,16 @@ class SettingsDialog(QDialog):
         QLabel#SettingNote {{
             color: {note_color};
         }}
-        QPushButton#CloseSettingsButton {{
-            background: transparent;
-            color: {button_fg};
-            border: 1px solid rgba(0,0,0,0);
-            padding: 6px 12px;
-        }}
-        QDialogButtonBox QPushButton {{
+        QPushButton#CloseSettingsButton, QDialogButtonBox QPushButton {{
             background: {button_bg};
             color: {button_fg};
-            border-radius: 6px;
-            padding: 6px 12px;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-weight: 700;
+        }}
+        QPushButton#CloseSettingsButton:hover, QDialogButtonBox QPushButton:hover {{
+            background: #0f5fe5;
         }}
         QCheckBox {{
             spacing: 8px;
@@ -317,6 +318,59 @@ class SettingsDialog(QDialog):
         """
 
         self.setStyleSheet(qss)
+        self.update()
+
+    def paintEvent(self, event) -> None:
+        """Draw the dialog shell with smooth rounded corners."""
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+
+        rect = self.rect().adjusted(1, 1, -1, -1)
+        path = QPainterPath()
+        path.addRoundedRect(rect, 20, 20)
+
+        if self.state.theme == "dark":
+            fill = QColor("#0f2234")
+            border = QColor("#304d79")
+        else:
+            fill = QColor("#f6f9ff")
+            border = QColor("#d4e3fb")
+
+        painter.fillPath(path, fill)
+        painter.setPen(QPen(border, 1))
+        painter.drawPath(path)
+        super().paintEvent(event)
+
+    def _capture_saved_state(self) -> None:
+        """Remember the last explicitly saved settings."""
+        self._saved_theme = self.state.theme
+        self._saved_font_size = self.state.font_size
+        self._saved_enter_to_send = self.state.enter_to_send
+        self._saved_enabled_skill_ids = set(self.state.enabled_skill_ids)
+        self._saved_active_skill_id = self.state.active_skill_id
+
+    def _restore_saved_state(self) -> None:
+        """Undo live preview changes that were not confirmed."""
+        self.state.theme = self._saved_theme
+        self.state.font_size = self._saved_font_size
+        self.state.enter_to_send = self._saved_enter_to_send
+        self.state.enabled_skill_ids = set(self._saved_enabled_skill_ids)
+        self.state.active_skill_id = self._saved_active_skill_id
+        self.settings_changed.emit()
+
+    def _preview_state(self) -> None:
+        """Apply control values immediately as a live preview."""
+        self._update_state()
+
+    def _save_settings(self) -> None:
+        """Keep current previewed settings without closing the dialog."""
+        self._update_state()
+        self._capture_saved_state()
+
+    def reject(self) -> None:
+        """Close the dialog and discard unconfirmed preview changes."""
+        self._restore_saved_state()
+        super().reject()
 
     def _update_state(self) -> None:
         """Persist control values to in-memory state."""
