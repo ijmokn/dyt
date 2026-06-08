@@ -1,0 +1,453 @@
+/* J-Mate PySide6 frontend styles based on the source HTML. */
+
+* {
+    font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+    color: #14345f;
+}
+
+QMainWindow,
+#Root {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #eef2fc, stop:1 #d9e3f0);
+    border-radius: 30px;
+}
+
+#AppContainer {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255, 255, 255, 0.82), stop:0.94 rgba(255, 255, 255, 0.82), stop:0.94 rgba(255, 255, 240, 0.20), stop:1 rgba(255, 255, 240, 0.20));
+    border: 1px solid rgba(59, 130, 246, 0.28);
+    border-radius: 30px;
+}
+
+#Root[theme="light"] {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f9fbff, stop:1 #edf2f8);
+}
+
+#Root[theme="dark"] {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #0e1422, stop:1 #111f36);
+}
+
+#AppContainer[theme="light"] {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255, 255, 255, 0.94), stop:0.94 rgba(255, 255, 255, 0.94), stop:0.94 rgba(255, 255, 240, 0.20), stop:1 rgba(255, 255, 240, 0.20));
+    border-color: rgba(148, 163, 184, 0.35);
+}
+
+#AppContainer[theme="dark"] {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(19, 29, 47, 0.92), stop:0.94 rgba(19, 29, 47, 0.92), stop:0.94 rgba(75, 91, 109, 0.72), stop:1 rgba(75, 91, 109, 0.72));
+    border-color: rgba(85, 120, 177, 0.38);
+}
+
+#HeaderBar {
+    background: rgba(255, 255, 255, 0.58);
+    border-bottom: 1px solid rgba(59, 130, 246, 0.20);
+    border-top-left-radius: 30px;
+    border-top-right-radius: 30px;
+}
+
+#HeaderBar[theme="dark"],
+#ChatView[theme="dark"] #InputArea,
+#ChatView[theme="dark"] #ConversationArea,
+#ChatView[theme="dark"] #MessagesWidget {
+    background: rgba(16, 27, 45, 0.84);
+    border-color: rgba(73, 107, 162, 0.42);
+}
+
+#HeaderBar[theme="dark"] #AppTitle {
+    color: #d2e6ff;
+}
+
+#HeaderBar[theme="dark"] #SubText {
+    color: #b7cff4;
+}
+
+#LogoIcon {
+    min-width: 36px;
+    max-width: 36px;
+    min-height: 36px;
+    max-height: 36px;
+    background: #1E6DFF;
+    color: #ffffff;
+    border-radius: 14px;
+    font-size: 16pt;
+    font-weight: 700;
+}
+
+#AppTitle {
+    color: #0A2B5E;
+    font-size: 18pt;
+    font-weight: 700;
+}
+
+#Badge {
+    background: #EFF6FF;
+    color: #1E6DFF;
+    border: 1px solid #BFDBFE;
+    border-radius: 14px;
+    padding: 4px 12px;
+    font-size: 9pt;
+    font-weight: 600;
+}
+
+#SubText {
+    color: #2c5c9e;
+    font-size: 10pt;
+}
+
+#WindowButton,
+#CloseWindowButton,
+#SettingsButton {
+    border: none;
+    background: transparent;
+    color: #1E6DFF;
+    border-radius: 8px;
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 36px;
+    max-height: 36px;
+    font-size: 15pt;
+    font-weight: 600;
+}
+
+#WindowButton:hover,
+#SettingsButton:hover {
+    background: rgba(30, 109, 255, 0.12);
+}
+
+#CloseWindowButton:hover {
+    background: rgba(225, 59, 59, 0.16);
+    color: #b42318;
+}
+
+#SkillsSection {
+    background: transparent;
+}
+
+#SkillsLabel {
+    color: #1E6DFF;
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+#SkillChip {
+    background: #ffffff;
+    color: #1e3a8a;
+    border: 1px solid #bfdbfe;
+    border-radius: 18px;
+    padding: 8px 20px;
+    font-size: 10pt;
+    font-weight: 600;
+}
+
+#SkillChip:hover {
+    background: #EFF6FF;
+    border-color: #1E6DFF;
+}
+
+#SkillChip:checked {
+    background: #1E6DFF;
+    color: #ffffff;
+    border-color: #1E6DFF;
+}
+
+#ConversationArea,
+#MessagesWidget {
+    background: rgba(248, 250, 255, 0.5);
+}
+
+#UserMessage,
+#AssistantMessage {
+    max-width: 940px;
+}
+
+#UserBubble,
+#AssistantBubble {
+    background: transparent;
+    border: none;
+}
+
+#ChatView[theme="dark"] #AssistantBubble,
+#ChatView[theme="dark"] #SkillChip,
+#ChatView[theme="dark"] #InputWrapper {
+    background: #17253c;
+    color: #d9e7ff;
+    border-color: #304d79;
+}
+
+#UserBubble {
+    background: transparent;
+    border: none;
+}
+
+#AssistantBubble {
+    background: transparent;
+    border: none;
+}
+
+#UserBubble #BubbleText {
+    color: #ffffff;
+    line-height: 1.45;
+}
+
+#AssistantBubble #BubbleText {
+    color: #0f2b3f;
+    line-height: 1.45;
+}
+
+#MessageMeta {
+    color: #6b8cbc;
+    font-size: 8pt;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+#InputArea {
+    background: rgba(255, 255, 255, 0.62);
+    border-top: 1px solid rgba(59, 130, 246, 0.20);
+}
+
+#InputWrapper {
+    background: transparent;
+    border: none;
+    min-height: 64px;
+}
+
+#InputWrapper:focus-within {
+    border: none;
+}
+
+#NaturalInput {
+    background: transparent;
+    border: none;
+    color: #1E293B;
+    padding-top: 7px;
+    padding-left: 0;
+}
+
+#SendButton {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-weight: 700;
+    padding: 0;
+    min-width: 78px;
+    max-width: 78px;
+    min-height: 44px;
+    max-height: 44px;
+}
+
+#SendButton:hover {
+    background: transparent;
+}
+
+#ClearButton {
+    background: transparent;
+    border: none;
+    color: #4870a2;
+    padding: 0;
+    min-width: 78px;
+    max-width: 78px;
+    min-height: 44px;
+    max-height: 44px;
+}
+
+#ClearButton:hover {
+    background: transparent;
+}
+
+#ExampleHint {
+    color: #5882c1;
+    font-size: 9pt;
+    text-decoration: underline;
+}
+
+#Footer {
+    background: transparent;
+    color: #6f93c2;
+    font-size: 8pt;
+    padding: 6px;
+    border-bottom-left-radius: 30px;
+    border-bottom-right-radius: 30px;
+}
+
+#SettingsDialog {
+    background: #ffffff;
+    border: 1px solid #d4e3fb;
+    border-radius: 20px;
+}
+
+#SettingsTitle {
+    color: #163a73;
+    font-size: 14pt;
+    font-weight: 800;
+}
+
+#SettingsGroupTitle {
+    color: #163a73;
+    font-weight: 800;
+    font-size: 11pt;
+}
+
+#SettingsGroup {
+    background: #fbfdff;
+    border: 1px solid #e2edff;
+    border-radius: 14px;
+}
+
+#SettingNote {
+    color: #5b7dab;
+    font-size: 9pt;
+}
+
+#ArrowComboBox {
+    background: transparent;
+    border: none;
+    padding: 6px 10px;
+    min-width: 190px;
+    max-width: 190px;
+    color: #174381;
+    text-align: left;
+}
+
+#ArrowComboBox:hover {
+    background: transparent;
+    border: none;
+}
+
+#ArrowComboMenu {
+    background: #ffffff;
+    border: 1px solid #c3d8f7;
+    color: #174381;
+}
+
+#ArrowComboMenu::item {
+    padding: 8px 18px;
+    min-width: 154px;
+}
+
+#ArrowComboMenu::item:selected {
+    background: #1E6DFF;
+    color: #ffffff;
+}
+
+QCheckBox {
+    color: #1f4b88;
+    spacing: 12px;
+    min-height: 26px;
+    padding-left: 4px;
+}
+
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+}
+
+QDialogButtonBox QPushButton,
+#ReopenButton {
+    background: #1E6DFF;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-weight: 700;
+}
+
+#CloseSettingsButton {
+    background: #f8fbff;
+    color: #2257a6;
+    border: 1px solid #c7daf9;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-weight: 500;
+}
+
+#CloseSettingsButton:hover {
+    background: #eff6ff;
+}
+
+#ReopenPanel {
+    background: rgba(9, 25, 48, 0.10);
+}
+
+#ReopenCard {
+    background: #ffffff;
+    border: 1px solid #cce0ff;
+    border-radius: 16px;
+}
+
+#ReopenTitle {
+    color: #1a3f76;
+    font-size: 12pt;
+    font-weight: 700;
+}
+
+QScrollBar:vertical {
+    background: #eef2fc;
+    width: 8px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical {
+    background: #b9d0f0;
+    border-radius: 4px;
+    min-height: 36px;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+/* Dark-theme overrides for dialog, bubble text and input color */
+#SettingsDialog[theme="dark"] {
+    background: rgba(19, 29, 47, 0.98);
+    border: 1px solid rgba(85, 120, 177, 0.38);
+    color: #d9e7ff;
+}
+
+#ChatView[theme="dark"] #AssistantBubble #BubbleText {
+    color: #d9e7ff;
+}
+
+#ChatView[theme="dark"] #NaturalInput {
+    color: #d9e7ff;
+}
+
+/* Login dialog and user popup should follow SettingsDialog styling but smaller */
+#LoginDialog {
+    background: #ffffff;
+    border: 1px solid #d4e3fb;
+    border-radius: 14px;
+}
+#LoginDialog[theme="dark"] {
+    background: rgba(19,29,47,0.96);
+    border: 1px solid rgba(85,120,177,0.34);
+    color: #d9e7ff;
+}
+
+#UserPopup {
+    background: #ffffff;
+    border: 1px solid #d4e3fb;
+    border-radius: 10px;
+    padding: 8px;
+}
+#UserPopup[theme="dark"] {
+    background: rgba(19,29,47,0.96);
+    border: 1px solid rgba(85,120,177,0.34);
+    color: #d9e7ff;
+}
+
+#LoginAnchor {
+    background: #ffffff;
+    border: 1px solid #d4e3fb;
+    border-radius: 19px;
+    color: #163a73;
+    font-weight: 700;
+    font-size: 11pt;
+    text-align: center;
+}
+#LoginAnchor[theme="dark"],
+#ChatView[theme="dark"] #LoginAnchor {
+    background: rgba(19,29,47,0.96);
+    border: 1px solid rgba(85,120,177,0.34);
+    color: #d9e7ff;
+}
+/* fallback for chat view scoping */
