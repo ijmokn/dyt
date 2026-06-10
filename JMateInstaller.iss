@@ -11,8 +11,8 @@ ArchitecturesInstallIn64BitMode=x64
 PrivilegesRequired=admin
 
 [Files]
-Source: "dist\JMate\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "installer\node-v24.16.0-x64.msi"; DestDir: "{tmp}"; Flags: deleteafterinstall
+Source: "dist_upx\JMate\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "installer\node-v24.16.0-x64.msi"; Flags: dontcopy
 
 [Icons]
 Name: "{group}\JMate"; Filename: "{app}\JMate.exe"
@@ -26,6 +26,8 @@ const
   MinNodeMajor = 24;
   MinNodeMinor = 0;
   MinNodePatch = 0;
+  NodeMsiName = 'node-v24.16.0-x64.msi';
+  BundleNodeVersion = '24.16.0';
 
 function GetNodeExePath(var NodePath: string): Boolean;
 var
@@ -64,12 +66,12 @@ begin
   end;
 end;
 
-function IsNodeVersionEnough(NodePath: string): Boolean;
+function GetNodeVersion(NodePath: string; var VersionText: string; var Major, Minor, Patch: Cardinal): Boolean;
 var
   VersionMS, VersionLS: Cardinal;
-  Major, Minor, Patch: Cardinal;
 begin
   Result := False;
+  VersionText := '';
 
   if not GetVersionNumbers(NodePath, VersionMS, VersionLS) then
     Exit;
@@ -77,6 +79,18 @@ begin
   Major := VersionMS shr 16;
   Minor := VersionMS and $FFFF;
   Patch := VersionLS shr 16;
+
+  VersionText :=
+    IntToStr(Major) + '.' +
+    IntToStr(Minor) + '.' +
+    IntToStr(Patch);
+
+  Result := True;
+end;
+
+function IsVersionEnough(Major, Minor, Patch: Cardinal): Boolean;
+begin
+  Result := False;
 
   if Major > MinNodeMajor then
     Result := True
@@ -92,52 +106,126 @@ begin
   end;
 end;
 
-function NeedInstallNode(): Boolean;
+function InstallNode(): Boolean;
 var
-  NodePath: string;
+  ResultCode: Integer;
+  NodeMsiPath: String;
 begin
-  Result := True;
+  Result := False;
 
-  if GetNodeExePath(NodePath) then
+  ExtractTemporaryFile(NodeMsiName);
+  NodeMsiPath := ExpandConstant('{tmp}\') + NodeMsiName;
+
+  if not FileExists(NodeMsiPath) then
   begin
-    if IsNodeVersionEnough(NodePath) then
-      Result := False;
+    MsgBox('Node.js 安装包释放失败：' + NodeMsiPath, mbError, MB_OK);
+    Exit;
   end;
+
+  if not Exec(
+    'msiexec.exe',
+    '/i "' + NodeMsiPath + '" /qn /norestart',
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode
+  ) then
+  begin
+    MsgBox('Node.js 安装程序启动失败，请手动安装 Node.js 后再安装 JMate。', mbError, MB_OK);
+    Exit;
+  end;
+
+  if ResultCode <> 0 then
+  begin
+    MsgBox('Node.js 安装失败，错误码：' + IntToStr(ResultCode), mbError, MB_OK);
+    Exit;
+  end;
+
+  Result := True;
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
-  ResultCode: Integer;
+  NodePath: string;
+  VersionText: string;
+  Major, Minor, Patch: Cardinal;
 begin
   Result := '';
 
-  if NeedInstallNode() then
+  if GetNodeExePath(NodePath) then
+  begin
+    if GetNodeVersion(NodePath, VersionText, Major, Minor, Patch) then
+    begin
+      if IsVersionEnough(Major, Minor, Patch) then
+      begin
+        MsgBox(
+          '检测到本机已安装 Node.js，当前版本为：v' + VersionText + '。' + #13#10#13#10 +
+          '该版本满足 JMate 的运行要求，将继续安装 JMate。',
+          mbInformation,
+          MB_OK
+        );
+        Exit;
+      end
+      else
+      begin
+        if MsgBox(
+          '检测到本机已安装 Node.js，当前版本为：v' + VersionText + '。' + #13#10#13#10 +
+          'JMate 要求 Node.js 版本不低于 v' +
+          IntToStr(MinNodeMajor) + '.' + IntToStr(MinNodeMinor) + '.' + IntToStr(MinNodePatch) + '。' + #13#10#13#10 +
+          '是否现在升级到安装包内置的 Node.js v' + BundleNodeVersion + '？',
+          mbConfirmation,
+          MB_YESNO
+        ) = IDYES then
+        begin
+          if not InstallNode() then
+          begin
+            Result := 'Node.js 自动升级失败，请手动安装 Node.js v' + BundleNodeVersion + ' 后再安装 JMate。';
+            Exit;
+          end;
+        end
+        else
+        begin
+          Result := '已取消安装。JMate 需要 Node.js v' +
+            IntToStr(MinNodeMajor) + '.' + IntToStr(MinNodeMinor) + '.' + IntToStr(MinNodePatch) +
+            ' 或更高版本才能正常运行。';
+          Exit;
+        end;
+      end;
+    end
+    else
+    begin
+      if MsgBox(
+        '检测到本机已安装 Node.js，但无法读取版本号。' + #13#10#13#10 +
+        '是否现在安装/修复为 Node.js v' + BundleNodeVersion + '？',
+        mbConfirmation,
+        MB_YESNO
+      ) = IDYES then
+      begin
+        if not InstallNode() then
+        begin
+          Result := 'Node.js 自动安装失败，请手动安装 Node.js v' + BundleNodeVersion + ' 后再安装 JMate。';
+          Exit;
+        end;
+      end
+      else
+      begin
+        Result := '已取消安装。无法确认 Node.js 版本是否满足要求。';
+        Exit;
+      end;
+    end;
+  end
+  else
   begin
     if MsgBox(
-      '检测到当前系统未安装 Node.js，或 Node.js 版本低于 ' +
-      IntToStr(MinNodeMajor) + '.' + IntToStr(MinNodeMinor) + '.' + IntToStr(MinNodePatch) +
-      '。' + #13#10#13#10 +
-      'JMate 需要 Node.js 才能正常运行。是否现在安装 Node.js？',
+      '未检测到本机安装 Node.js。' + #13#10#13#10 +
+      'JMate 需要 Node.js 才能正常运行，是否现在安装内置的 Node.js v' + BundleNodeVersion + '？',
       mbConfirmation,
       MB_YESNO
     ) = IDYES then
     begin
-      if not Exec(
-        'msiexec.exe',
-        '/i "' + ExpandConstant('{tmp}\node-v24.16.0-x64.msi') + '" /qn /norestart',
-        '',
-        SW_HIDE,
-        ewWaitUntilTerminated,
-        ResultCode
-      ) then
+      if not InstallNode() then
       begin
-        Result := 'Node.js 安装程序启动失败，请手动安装 Node.js 后再安装 JMate。';
-        Exit;
-      end;
-
-      if ResultCode <> 0 then
-      begin
-        Result := 'Node.js 安装失败，请手动安装 Node.js 后再安装 JMate。错误码：' + IntToStr(ResultCode);
+        Result := 'Node.js 自动安装失败，请手动安装 Node.js v' + BundleNodeVersion + ' 后再安装 JMate。';
         Exit;
       end;
     end
