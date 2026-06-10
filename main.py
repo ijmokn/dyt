@@ -1,33 +1,3 @@
-# """项目统一启动入口。
-#
-# 开发、调试和后续打包时优先运行这个文件。它负责把 frontend 目录加入导入路径，
-# 然后委托给 PySide6 前端入口启动应用。
-# """
-#
-# from __future__ import annotations
-#
-# from pathlib import Path
-# import sys
-#
-#
-# ROOT_DIR = Path(__file__).resolve().parent
-# FRONTEND_DIR = ROOT_DIR / "frontend"
-#
-# # 统一启动时需要同时暴露项目根目录和 frontend 目录：
-# # - 项目根目录用于导入 shared/backend
-# # - frontend 目录用于兼容现有 app/views/widgets/services 形式的前端导入
-# for path in (ROOT_DIR, FRONTEND_DIR):
-#     path_text = str(path)
-#     if path_text not in sys.path:
-#         sys.path.insert(0, path_text)
-#
-# from frontend.main import main  # noqa: E402
-#
-#
-# if __name__ == "__main__":
-#     raise SystemExit(main())
-#
-
 """项目统一启动入口。
 
 开发、调试和后续打包时优先运行这个文件。它负责把 frontend 目录加入导入路径，
