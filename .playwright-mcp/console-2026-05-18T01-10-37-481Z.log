@@ -1,0 +1,3 @@
+[    1280ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://stg.azure-pilot.aida.ajis-group.com/imart/ajis/FP9908-1?:0
+[    9903ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ https://stg.azure-pilot.aida.ajis-group.com/home:0
+[   41223ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://stg.azure-pilot.aida.ajis-group.com/imart/login:0

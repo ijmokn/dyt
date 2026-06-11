@@ -1,0 +1,2 @@
+[   32636ms] [ERROR] Access to fetch at 'https://stg.azure-pilot.aida.ajis-group.com/imart/component-ajax-service/listtable/session/dbde15befd6bd500ca37f072bff39f12e7a9e6fd' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:blank:0
+[   32637ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://stg.azure-pilot.aida.ajis-group.com/imart/component-ajax-service/listtable/session/dbde15befd6bd500ca37f072bff39f12e7a9e6fd:0

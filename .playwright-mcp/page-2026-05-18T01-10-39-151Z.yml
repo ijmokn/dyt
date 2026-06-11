@@ -1,0 +1,15 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e6]:
+      - term [ref=e7]: "HTTP 401 : 在未认证状态下访问了要认证资源。"
+      - definition [ref=e8]:
+        - text: 用户必须认证。
+        - text: 用户未认证或证书错误。
+        - text: 请首先通过用户认证。
+        - text: 如果情况仍然没有改善，请与网站管理员联系。
+    - button "登录画面" [ref=e10]
+  - generic [ref=e12]:
+    - paragraph [ref=e13]: Copyright © 2012 NTT DATA INTRAMART CORPORATION
+    - list [ref=e14]:
+      - listitem [ref=e15]:
+        - img [ref=e16]

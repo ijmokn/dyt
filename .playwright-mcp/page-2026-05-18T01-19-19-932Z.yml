@@ -1,0 +1,288 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e4]:
+        - heading [level=1] [ref=e5]:
+          - link [ref=e6] [cursor=pointer]:
+            - /url: https://stg.azure-pilot.aida.ajis-group.com/imart/home
+            - img [ref=e7]
+        - list [ref=e8]:
+          - listitem [ref=e9]:
+            - link "ｸﾙｰﾎﾟｰﾀﾙ" [ref=e10] [cursor=pointer]:
+              - /url: "javascript: void(0);"
+              - generic [ref=e13]: ｸﾙｰﾎﾟｰﾀﾙ
+          - listitem [ref=e15]:
+            - link "ｵﾌｨｽ" [ref=e16] [cursor=pointer]:
+              - /url: "javascript: void(0);"
+              - generic [ref=e19]: ｵﾌｨｽ
+          - listitem [ref=e21]:
+            - link "売上ｺｽﾄ" [ref=e22] [cursor=pointer]:
+              - /url: "javascript: void(0);"
+              - generic [ref=e25]: 売上ｺｽﾄ
+          - listitem [ref=e27]:
+            - link "ｽｹｸﾙ・打合せ" [ref=e28] [cursor=pointer]:
+              - /url: "javascript: void(0);"
+              - generic [ref=e31]: ｽｹｸﾙ・打合せ
+          - listitem [ref=e33]:
+            - link "要員" [ref=e34] [cursor=pointer]:
+              - /url: "javascript: void(0);"
+              - generic [ref=e37]: 要員
+          - listitem [ref=e39]:
+            - link "more..." [ref=e40] [cursor=pointer]:
+              - /url: "javascript: void(0);"
+              - generic [ref=e43]: more...
+        - generic [ref=e45]:
+          - list [ref=e46]:
+            - listitem [ref=e47]:
+              - link "高 晶" [ref=e48] [cursor=pointer]:
+                - /url: javascript:void(0);
+                - generic [ref=e49]: 高 晶
+          - list [ref=e51]:
+            - listitem [ref=e52]:
+              - img [ref=e54] [cursor=pointer]
+          - list [ref=e55]:
+            - listitem [ref=e56]
+  - generic [ref=e62]:
+    - heading "FP9908_1：社員マスター" [level=1] [ref=e64]:
+      - generic [ref=e65]: FP9908_1：社員マスター
+    - generic [ref=e66]:
+      - generic [ref=e69]:
+        - heading "検索条件" [level=3] [ref=e70]:
+          - link "検索条件" [ref=e72] [cursor=pointer]:
+            - /url: "#"
+        - generic [ref=e74]:
+          - table [ref=e75]:
+            - rowgroup [ref=e76]:
+              - row "社員コード" [ref=e77]:
+                - rowheader "社員コード" [ref=e78]:
+                  - generic [ref=e79]: 社員コード
+                - cell [ref=e80]:
+                  - textbox [ref=e81]
+              - row "社員名" [ref=e82]:
+                - rowheader "社員名" [ref=e83]:
+                  - generic [ref=e84]: 社員名
+                - cell [ref=e85]:
+                  - textbox [ref=e86]
+              - row "社員名（ｶﾅ）" [ref=e87]:
+                - rowheader "社員名（ｶﾅ）" [ref=e88]:
+                  - generic [ref=e89]: 社員名（ｶﾅ）
+                - cell [ref=e90]:
+                  - textbox [ref=e91]
+              - row "職務" [ref=e92]:
+                - rowheader "職務" [ref=e93]:
+                  - generic [ref=e94]: 職務
+                - cell [ref=e95]:
+                  - combobox [ref=e96]:
+                    - option [selected]
+                    - option "SV"
+                    - option "BP"
+              - row "所属組織 DO 情報ｼｽﾃﾑ部" [ref=e97]:
+                - rowheader "所属組織" [ref=e98]:
+                  - generic [ref=e99]: 所属組織
+                - cell "DO 情報ｼｽﾃﾑ部" [ref=e100]:
+                  - combobox [disabled] [ref=e101]:
+                    - option
+                    - option "DO" [selected]
+                    - option "ゾーン"
+                  - combobox [disabled] [ref=e102]:
+                    - option
+                    - option "CSC事業部ﾌｨｰﾙﾄﾞ"
+                    - option "経営企画室"
+                    - option "関係会社サポート室"
+                    - option "監査室"
+                    - option "旧）FCｻﾎﾟｰﾄ室"
+                    - option "DX戦略本部"
+                    - option "旧）管理本部"
+                    - option "グループ営業本部"
+                    - option "新規事業開発室"
+                    - option "国際事業本部"
+                    - option "旧）品質管理室"
+                    - option "旧）バーチャルDO北関東"
+                    - option "旧）バーチャルDO南関東"
+                    - option "旧）バーチャルDO中日本"
+                    - option "旧）バーチャルDO西日本"
+                    - option "コーポレート本部"
+                    - option "グループデータビジネス戦略室"
+                    - option "旧）D.O.標準化推進部"
+                    - option "技術開発部"
+                    - option "情報ｼｽﾃﾑ部" [selected]
+                    - option "営業部"
+                    - option "旧）CvS事業部"
+                    - option "財務会計部"
+                    - option "人事総務部"
+                    - option "東北・北関東ゾーン"
+                    - option "旧）北関東ｿﾞｰﾝ"
+                    - option "関東ゾーン"
+                    - option "中部ゾーン"
+                    - option "関西ゾーン"
+                    - option "旧）西日本ｿﾞｰﾝ"
+                    - option "旧）RS営業部"
+                    - option "旧）関東ｿﾞｰﾝ"
+                    - option "国際事業企画開発部"
+                    - option "国内棚卸事業本部"
+                    - option "旧）グループ営業推進室"
+                    - option "旧）営業第3部"
+                    - option "旧）ｸﾞﾛｰﾊﾞﾙ･ｷｰｱｶｳﾝﾄ"
+                    - option "旧）営業本部東北地区"
+                    - option "旧）営業本部北関東地区"
+                    - option "旧）営業本部東海北陸地区"
+                    - option "旧）営業本部近畿中国地区"
+                    - option "旧）アセアン統括部"
+                    - option "旧）DO支援（東日本Z）"
+                    - option "旧）DO支援（首都圏Z）"
+                    - option "旧）DO支援（中日本Z）"
+                    - option "旧）DO支援（西日本Z）"
+                    - option "中国RS事業推進室"
+                    - option "旧）東アジア統括部"
+                    - option "旧）流通ｿﾘｭｰｼｮﾝ事業部"
+                    - option "旧）CvSｵﾍﾟﾚｰｼｮﾝ部"
+                    - option "国内棚卸事業本部（原価）"
+                    - option "旧）北米統括部"
+                    - option "旧）DX推進室"
+                    - option "ｸﾞﾙｰﾌﾟﾏｰｹﾃｨﾝｸﾞ推進室"
+                    - option "人事総務部(原価)"
+                    - option "Easy棚卸プロジェクト"
+                    - option "ウォルマート"
+                    - option "RS"
+                    - option "新規事業（本部売上）"
+                    - option "旧）技術開発室"
+                    - option "旧）CSC事業部"
+                    - option "旧）ASC"
+                    - option "旧）技術指導部"
+                    - option "旧）海外営業部"
+                    - option "旧）流通ｿﾘｭｰｼｮﾝWareHouse"
+                    - option "旧）秋田D.O."
+                    - option "盛岡D.O."
+                    - option "青森D.O."
+                    - option "郡山D.O."
+                    - option "旧）山形D.O."
+                    - option "仙台D.O."
+                    - option "松本D.O."
+                    - option "高崎D.O."
+                    - option "新潟D.O."
+                    - option "さいたまD.O."
+                    - option "宇都宮D.O."
+                    - option "旧）水戸D.O."
+                    - option "旧）北関東CvSDO"
+                    - option "旧）東北CvSDO"
+                    - option "旧）西千葉D.O."
+                    - option "千葉D.O."
+                    - option "旧）川越D.O."
+                    - option "柏D.O."
+                    - option "旧）市原D.O."
+                    - option "東京D.O."
+                    - option "八王子D.O."
+                    - option "東東京D.O."
+                    - option "厚木D.O."
+                    - option "横浜D.O."
+                    - option "旧）東関東CvSDO"
+                    - option "旧）首都圏CvSDO"
+                    - option "旧）南東京D.O."
+                    - option "旧）横浜関内D.O."
+                    - option "旧）静岡D.O."
+                    - option "名古屋D.O."
+                    - option "浜松D.O."
+                    - option "金沢D.O."
+                    - option "岐阜D.O."
+                    - option "四日市D.O."
+                    - option "旧）中部CvSDO"
+                    - option "大阪D.O."
+                    - option "旧）東大阪D.O."
+                    - option "京都D.O."
+                    - option "堺D.O."
+                    - option "神戸D.O."
+                    - option "岡山D.O."
+                    - option "旧）姫路D.O."
+                    - option "旧）関西CvSDO"
+                    - option "旧）町田D.O."
+                    - option "旧）中部CvSDO北陸エリア"
+                    - option "旧）関西CvSDO兵庫エリア"
+                    - option "除外"
+                    - option "ダミー"
+              - row "退職者含む" [ref=e103]:
+                - rowheader "退職者含む" [ref=e104]:
+                  - generic [ref=e105]: 退職者含む
+                - cell [ref=e106]:
+                  - checkbox [ref=e108] [cursor=pointer]
+          - button "検索" [ref=e109] [cursor=pointer]
+      - generic [ref=e111]:
+        - generic [ref=e112]:
+          - grid "編集 社員コード 社員名 社員名（ｶﾅ） 職務 所属組織 現住所 緯度 経度 鉄道最寄駅 バス最寄駅 ページ中 0 ページ目 10" [ref=e115]:
+            - rowgroup [ref=e116]:
+              - rowheader "編集 社員コード 社員名 社員名（ｶﾅ） 職務 所属組織 現住所 緯度 経度 鉄道最寄駅 バス最寄駅" [ref=e117]:
+                - columnheader "編集" [ref=e118]:
+                  - generic [ref=e120] [cursor=pointer]: 編集
+                - columnheader "社員コード" [ref=e121]:
+                  - generic [ref=e123] [cursor=pointer]: 社員コード
+                - columnheader "社員名" [ref=e124]:
+                  - generic [ref=e126] [cursor=pointer]: 社員名
+                - columnheader "社員名（ｶﾅ）" [ref=e127]:
+                  - generic [ref=e129] [cursor=pointer]: 社員名（ｶﾅ）
+                - columnheader "職務" [ref=e130]:
+                  - generic [ref=e132] [cursor=pointer]: 職務
+                - columnheader "所属組織" [ref=e133]:
+                  - generic [ref=e135] [cursor=pointer]: 所属組織
+                - columnheader "現住所" [ref=e136]:
+                  - generic [ref=e138] [cursor=pointer]: 現住所
+                - columnheader "緯度" [ref=e139]:
+                  - generic [ref=e141] [cursor=pointer]: 緯度
+                - columnheader "経度" [ref=e142]:
+                  - generic [ref=e144] [cursor=pointer]: 経度
+                - columnheader "鉄道最寄駅" [ref=e145]:
+                  - generic [ref=e147] [cursor=pointer]: 鉄道最寄駅
+                - columnheader "バス最寄駅" [ref=e148]:
+                  - generic [ref=e150] [cursor=pointer]: バス最寄駅
+          - generic [ref=e151]:
+            - generic:
+              - grid "編集 社員コード 社員名 社員名（ｶﾅ） 職務 所属組織 現住所 緯度 経度 鉄道最寄駅 バス最寄駅 ページ中 0 ページ目 10":
+                - rowgroup:
+                  - row:
+                    - gridcell
+                    - gridcell
+                    - gridcell
+                    - gridcell
+                    - gridcell
+                    - gridcell
+                    - gridcell
+                    - gridcell
+                    - gridcell
+                    - gridcell
+                    - gridcell
+        - group [ref=e153]:
+          - row "ページ中 0 ページ目 10" [ref=e154]:
+            - rowgroup [ref=e155]:
+              - row "ページ中 0 ページ目 10" [ref=e156]:
+                - cell [ref=e157]:
+                  - table [ref=e158]:
+                    - rowgroup [ref=e159]:
+                      - row [ref=e160]:
+                        - cell "グリッドをリロード" [ref=e161] [cursor=pointer]
+                - cell "ページ中 0 ページ目 10" [ref=e164]:
+                  - table [ref=e165]:
+                    - rowgroup [ref=e166]:
+                      - row "ページ中 0 ページ目 10" [ref=e167]:
+                        - cell [ref=e168] [cursor=pointer]
+                        - cell [ref=e170] [cursor=pointer]
+                        - cell [ref=e172]
+                        - cell "ページ中 0 ページ目" [ref=e174]:
+                          - text: ページ中
+                          - textbox [ref=e175]: "0"
+                          - text: ページ目
+                        - cell [ref=e176]
+                        - cell [ref=e178] [cursor=pointer]
+                        - cell [ref=e180] [cursor=pointer]
+                        - cell "10" [ref=e182]:
+                          - listbox [ref=e183]:
+                            - option "10" [selected]
+                            - option "50"
+                            - option "100"
+                            - option "500"
+                - cell [ref=e184]
+  - contentinfo [ref=e185]:
+    - generic [ref=e186]:
+      - paragraph [ref=e187]: Copyright © 2012 NTT DATA INTRAMART CORPORATION
+      - list [ref=e188]:
+        - listitem [ref=e189]:
+          - img [ref=e190]
+        - listitem [ref=e191]:
+          - paragraph [ref=e192]: top ↑

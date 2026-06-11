@@ -1,0 +1,3 @@
+[  210294ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ https://stg.azure-pilot.aida.ajis-group.com/imart/component-ajax-service/listtable/session/b815f83f738cd750882fcf30c394764ec6fc2d95:0
+[  222484ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ https://stg.azure-pilot.aida.ajis-group.com/imart/component-ajax-service/listtable/session/b815f83f738cd750882fcf30c394764ec6fc2d95:0
+[11342585ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://stg.azure-pilot.aida.ajis-group.com/imart/login?:0
