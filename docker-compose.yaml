@@ -1,10 +1,29 @@
+version: '3.8'
+
 services:
-  app:
+  # 后端服务
+  backend:
     build:
-      context: ./src
+      context: ./src/server
+      dockerfile: Dockerfile
+    container_name: ai-agents-backend
     env_file:
-      - .env
+      - .env 
+    environment:
+      - RUNNING_IN_PRODUCTION=false  # 开发模式
+      - DATABASE_URL=postgresql://postgres:Sjj12345.@host.docker.internal:5432/postgres
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
-      - 50505:50505
+      - "50505:50505"
     volumes:
-      - ./src:/code
+      - ./src/server:/code  # 挂载代码目录用于热重载
+      - /code/__pycache__  # 排除 pycache
+    command: ["gunicorn", "-c", "gunicorn.conf.py", "api.main:app"]
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

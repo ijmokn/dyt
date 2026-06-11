@@ -16,4 +16,4 @@ node_modules/
 .pnpm-debug.log
 
 # React build output
-src/api/static/react/
+src/server/api/static/react/
