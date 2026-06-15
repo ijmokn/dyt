@@ -1,16 +1,22 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_dynamic_libs
+from PyInstaller.utils.hooks import collect_dynamic_libs, collect_submodules
 
 binaries = []
 binaries += collect_dynamic_libs('shiboken6')
+
+# Azure SDK 在运行时会动态加载部分子模块，打包时需要显式收集。
+azure_hiddenimports = []
+azure_hiddenimports += collect_submodules('azure.ai.projects')
+azure_hiddenimports += collect_submodules('azure.identity')
+azure_hiddenimports += collect_submodules('azure.core')
 
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=binaries,
-    datas=[('frontend', 'frontend'), ('shared', 'shared'), ('backend', 'backend')],
-    hiddenimports=['shiboken6.Shiboken', 'PySide6.QtCore', 'PySide6.QtGui', 'PySide6.QtWidgets'],
+    datas=[('frontend', 'frontend'), ('shared', 'shared'), ('backend', 'backend'), ('azure.env', '.')],
+    hiddenimports=['shiboken6.Shiboken', 'PySide6.QtCore', 'PySide6.QtGui', 'PySide6.QtWidgets'] + azure_hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
