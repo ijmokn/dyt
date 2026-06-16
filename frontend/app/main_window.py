@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QPoint, Qt
+from PySide6.QtCore import QPoint, Qt, QTimer
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QStackedLayout, QVBoxLayout, QWidget, QPushButton
 
@@ -73,9 +73,12 @@ class MainWindow(QMainWindow):
         self.state.theme_changed.connect(self.apply_visual_settings)
         self.state.font_size_changed.connect(self.apply_visual_settings)
         self.state.enter_to_send_changed.connect(self.chat_view.refresh_from_state)
+        self.state.skills_enabled_changed.connect(self.header.set_skills_enabled)
+        self.state.skills_enabled_changed.connect(self.chat_view.refresh_from_state)
         self.state.enabled_skill_ids_changed.connect(self.chat_view.refresh_from_state)
         self.state.active_skill_changed.connect(self.chat_view.refresh_from_state)
         self.apply_visual_settings()
+        QTimer.singleShot(0, self._show_initial_login)
 
     def _create_app_card(self) -> QWidget:
         """Build the glass-like main app container."""
@@ -97,6 +100,7 @@ class MainWindow(QMainWindow):
     def _connect_signals(self) -> None:
         """Wire header buttons to frontend-only window interactions."""
         self.header.settings_requested.connect(self._open_settings)
+        self.header.skills_enabled_changed.connect(self._set_skills_enabled)
         self.header.user_requested.connect(self._handle_user_request)
         self.header.minimize_requested.connect(self._toggle_content_minimized)
         self.header.maximize_requested.connect(self._toggle_maximized)
@@ -108,14 +112,37 @@ class MainWindow(QMainWindow):
             btn.hide()
         # position anchor
         self._position_anchors()
+
+    def _set_skills_enabled(self, enabled: bool) -> None:
+        """Toggle global Skills mode from the header switch."""
+        self.state.skills_enabled = enabled
+        message = (
+            "已启用 Skills，将按设置中勾选的技能优先处理。"
+            if enabled
+            else "已关闭 Skills，将仅使用通用智能模式。"
+        )
+        self.chat_view._add_message("assistant", message)
+
+    def _show_initial_login(self) -> None:
+        """Show login on startup until the user signs in."""
+        if not self.state.logged_in:
+            self._handle_user_request()
     def _open_settings(self) -> None:
         """Open the settings dialog and refresh visible skill chips afterward."""
         dialog = SettingsDialog(self.state, self)
         dialog.settings_changed.connect(self.chat_view.refresh_from_state)
         dialog.settings_changed.connect(self.apply_visual_settings)
+        if hasattr(dialog, "logout_requested"):
+            dialog.logout_requested.connect(self._logout_to_login)
         dialog.exec()
         self.apply_visual_settings()
         self.chat_view.refresh_from_state()
+
+    def _logout_to_login(self) -> None:
+        """Return to the startup login card from Settings."""
+        self.state.logged_in = False
+        self.state.user_name = None
+        self._show_initial_login()
 
     def _handle_user_request(self) -> None:
         """Show login dialog if not logged in, otherwise show user popup."""
@@ -124,8 +151,7 @@ class MainWindow(QMainWindow):
             dlg.setProperty("theme", self.state.theme)
             self.state.theme_changed.connect(lambda v: dlg.setProperty("theme", v))
             if dlg.exec():
-                # after login, show popup
-                self._show_user_popup()
+                self.chat_view.input_bar.input.setFocus()
         else:
             self._toggle_user_popup()
 

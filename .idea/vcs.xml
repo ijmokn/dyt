@@ -2,5 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/structure/00.Demo/04.EasyInventoryMCPServer/easy-inventory-mcp-server" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/structure/00.Demo/ai-agent" vcs="Git" />
   </component>
 </project>

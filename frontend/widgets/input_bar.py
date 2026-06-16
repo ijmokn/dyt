@@ -7,6 +7,19 @@ from PySide6.QtGui import QColor, QKeyEvent, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout
 
 
+QUICK_HINTS_WHEN_SKILLS_ON = (
+    ("查询今日打卡", "查询今日打卡"),
+    ("下载月末考勤表", "下载月末考勤表"),
+    ("打印月末考勤表", "打印月末考勤表"),
+)
+
+QUICK_HINTS_WHEN_SKILLS_OFF = (
+    ("查询年假制度", "查询年假制度"),
+    ("查询报销标准", "查询报销标准"),
+    ("查询加班规定", "查询加班规定"),
+)
+
+
 class RoundedInputWrapper(QFrame):
     """Paint the input container as a stable rounded capsule.
 
@@ -160,6 +173,7 @@ class InputBar(QFrame):
         super().__init__()
         self.setObjectName("InputArea")
         self.input = CommandTextEdit()
+        self._hint_labels: list[QLabel] = []
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -199,12 +213,7 @@ class InputBar(QFrame):
         hints = QHBoxLayout()
         hints.setSpacing(14)
         hints.addStretch(1)
-        examples = (
-            ("📌 查询今日考勤", "📌 查询我今天的考勤记录，包含上班时间、下班时间与是否迟到"),
-            ("📄 查询休假制度", "📄 请说明公司休假制度，包括年假、病假和调休规则"),
-            ("📅 预定会议", "📅 帮我预定明天下午3点与产品团队的会议，议题为Q2规划"),
-            ("📧 发送邮件", "📧 帮我发送邮件给项目组，通知本周迭代进度与下周计划"),
-        )
+        examples = QUICK_HINTS_WHEN_SKILLS_ON
         for text, value in examples:
             label = QLabel(text)
             # `ExampleHint` 在 QSS 中定义了链接样式（下划线、颜色），并在 hover 时显示可点击感
@@ -212,6 +221,7 @@ class InputBar(QFrame):
             label.setCursor(Qt.CursorShape.PointingHandCursor)
             label.mousePressEvent = lambda event, value=value: self._fill_example(value)
             hints.addWidget(label)
+            self._hint_labels.append(label)
         hints.addStretch(1)
 
         root.addWidget(wrapper)
@@ -220,6 +230,13 @@ class InputBar(QFrame):
     def set_enter_to_send(self, enabled: bool) -> None:
         """Update keyboard sending behavior."""
         self.input.enter_to_send = enabled
+
+    def set_skills_enabled(self, enabled: bool) -> None:
+        """Switch quick examples to match the global Skills state."""
+        examples = QUICK_HINTS_WHEN_SKILLS_ON if enabled else QUICK_HINTS_WHEN_SKILLS_OFF
+        for label, (text, value) in zip(self._hint_labels, examples):
+            label.setText(text)
+            label.mousePressEvent = lambda event, value=value: self._fill_example(value)
 
     def _emit_send(self) -> None:
         """Emit non-empty input text."""
@@ -234,3 +251,4 @@ class InputBar(QFrame):
         """Fill a quick example into the input box."""
         self.input.setPlainText(text)
         self.input.setFocus()
+

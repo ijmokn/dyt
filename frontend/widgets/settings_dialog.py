@@ -218,6 +218,7 @@ class SettingsDialog(QDialog):
     """Runtime-only settings modal."""
 
     settings_changed = Signal()
+    logout_requested = Signal()
 
     def __init__(self, state: AppState, parent=None) -> None:
         super().__init__(parent)
@@ -233,7 +234,7 @@ class SettingsDialog(QDialog):
         self.setObjectName("SettingsDialog")
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
-        self.setMinimumWidth(760)
+        self.setMinimumWidth(640)
         # 构建 UI：将所有控件分组并布局到对话框中
         # 这里把 UI 构建逻辑单独放在 `_build_ui`，便于维护和测试
         self._build_ui()
@@ -326,8 +327,15 @@ class SettingsDialog(QDialog):
         suggestion_layout.addWidget(suggestion)
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
-        buttons.button(QDialogButtonBox.StandardButton.Ok).setText("保存")
+        buttons.button(QDialogButtonBox.StandardButton.Ok).setText("完成")
         buttons.accepted.connect(self._save_settings)
+        logout_button = QPushButton("退出登录")
+        logout_button.setObjectName("LogoutSettingsButton")
+        logout_button.clicked.connect(self._logout)
+        footer_buttons = QHBoxLayout()
+        footer_buttons.addStretch(1)
+        footer_buttons.addWidget(logout_button)
+        footer_buttons.addWidget(buttons)
         # 底部按钮区域：负责确认/完成操作。
         # 在截图中，完成/发送相关按钮位于对话框的右下角，用户点击"完成"会触发 accept()
 
@@ -338,7 +346,12 @@ class SettingsDialog(QDialog):
         layout.addWidget(input_group)
         layout.addWidget(skill_group)
         layout.addWidget(suggestion_group)
-        layout.addWidget(buttons)
+        layout.addLayout(footer_buttons)
+
+    def _logout(self) -> None:
+        """退出登录并回到启动登录界面。"""
+        self.logout_requested.emit()
+        self.accept()
 
     @staticmethod
     def _group(title: str) -> QFrame:
@@ -399,16 +412,27 @@ class SettingsDialog(QDialog):
         QLabel#SettingNote {{
             color: {note_color};
         }}
-        QPushButton#CloseSettingsButton, QDialogButtonBox QPushButton {{
+        QPushButton#CloseSettingsButton,
+        QPushButton#LogoutSettingsButton,
+        QDialogButtonBox QPushButton {{
             background: {button_bg};
             color: {button_fg};
-            border: none;
+            border: 1px solid transparent;
             border-radius: 10px;
             padding: 8px 14px;
             font-weight: 700;
         }}
-        QPushButton#CloseSettingsButton:hover, QDialogButtonBox QPushButton:hover {{
+        QPushButton#LogoutSettingsButton {{
+            color: #c03636;
+            border: 1px solid #f5c2c2;
+            background: #ffffff;
+        }}
+        QPushButton#CloseSettingsButton:hover,
+        QDialogButtonBox QPushButton:hover {{
             background: #0f5fe5;
+        }}
+        QPushButton#LogoutSettingsButton:hover {{
+            background: #fff5f5;
         }}
         QCheckBox {{
             spacing: 8px;
@@ -479,9 +503,10 @@ class SettingsDialog(QDialog):
         self._update_state()
 
     def _save_settings(self) -> None:
-        """Keep current previewed settings without closing the dialog."""
+        """Keep current previewed settings and close the dialog."""
         self._update_state()
         self._capture_saved_state()
+        super().accept()
 
     def reject(self) -> None:
         """Close the dialog and discard unconfirmed preview changes."""
