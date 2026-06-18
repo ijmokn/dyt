@@ -37,6 +37,7 @@ class MainWindow(QMainWindow):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self._drag_position: QPoint | None = None
+        self._load_attendance_config_on_startup()
 
         self.header = HeaderBar()
         self.chat_view = ChatView(self.state)
@@ -112,6 +113,20 @@ class MainWindow(QMainWindow):
             btn.hide()
         # position anchor
         self._position_anchors()
+
+    def _load_attendance_config_on_startup(self) -> None:
+        """启动时读取用户目录配置，有有效账号则直接进入已登录状态。"""
+        try:
+            from backend.services.attendance_config import load_config
+
+            result = load_config()
+        except Exception:
+            return
+        self.state.attendance_config = result.config
+        if not result.requires_login:
+            username = str(result.config.get("attendance", {}).get("username", "")).strip()
+            self.state.user_name = username
+            self.state.logged_in = True
 
     def _set_skills_enabled(self, enabled: bool) -> None:
         """Toggle global Skills mode from the header switch."""

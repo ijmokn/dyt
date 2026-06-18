@@ -94,7 +94,7 @@ def initialize_azure_agent() -> None:
         )
 
         my_agent = "AJISDL-Rules"
-        my_version = "2"
+        my_version = "6"
         logger.info("Azure Agent agent_reference name=%s, version=%s", my_agent, my_version)
 
         logger.info("Azure Agent 获取 OpenAI client")

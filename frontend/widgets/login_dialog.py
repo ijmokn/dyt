@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QApplication, QCheckBox, QDialog, QHBoxLayout, QLa
 
 from app.state import AppState
 from app.theme_tokens import tokens_for_theme
-from services.auth_service import AuthService
+from frontend.services.auth_service import AuthService
 
 
 class LoginDialog(QDialog):
@@ -148,6 +148,16 @@ class LoginDialog(QDialog):
         response = self.auth_service.login(username=member_id, password=self.password.text())
         if not response.success:
             self.error_label.setText(response.message or "登录失败，请重试。")
+            return
+
+        try:
+            from backend.services.attendance_config import build_login_config, load_config, save_config
+
+            # 登录成功后，根据社员号生成三套系统账号，并把密码加密写入用户目录配置文件。
+            current_config = self.state.attendance_config or load_config().config
+            self.state.attendance_config = save_config(build_login_config(member_id, current_config))
+        except Exception as exc:
+            self.error_label.setText(f"配置保存失败：{exc}")
             return
 
         self.state.user_name = response.user_name or member_id

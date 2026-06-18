@@ -10,7 +10,7 @@ from typing import Callable, Optional
 
 from PySide6.QtCore import QThreadPool
 
-from services.backend_client import BackendClient
+from frontend.services.backend_client import BackendClient
 from shared.protocol import ChatRequest
 from workers.task import Worker
 

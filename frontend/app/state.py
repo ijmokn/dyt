@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Set
+from typing import Any, Optional, Set
 
 from PySide6.QtCore import QObject, Signal
 
@@ -35,6 +35,7 @@ class AppState(QObject):
     enabled_skill_ids_changed = Signal(object)
     logged_in_changed = Signal(bool)
     user_name_changed = Signal(object)
+    attendance_config_changed = Signal(object)
     # 登录入口按钮尺寸配置发生变化时发出，用于重新定位左下角入口。
     anchor_config_changed = Signal()
 
@@ -48,6 +49,7 @@ class AppState(QObject):
         self._enabled_skill_ids: Set[str] = {skill.id for skill in DEFAULT_SKILLS}
         self._logged_in: bool = False
         self._user_name: Optional[str] = None
+        self._attendance_config: dict[str, Any] | None = None
 
         # 左下角登录入口按钮的比例配置，默认值来自 theme_tokens。
         self._anchor_width_ratio: float = LOGIN_ANCHOR_WIDTH_RATIO
@@ -195,6 +197,15 @@ class AppState(QObject):
         if value != self._user_name:
             self._user_name = value
             self.user_name_changed.emit(value)
+
+    @property
+    def attendance_config(self) -> dict[str, Any] | None:
+        return self._attendance_config
+
+    @attendance_config.setter
+    def attendance_config(self, value: dict[str, Any] | None) -> None:
+        self._attendance_config = value
+        self.attendance_config_changed.emit(value)
 
     def enabled_skills(self) -> list[Skill]:
         """返回当前应该显示在主界面技能栏中的技能列表。"""

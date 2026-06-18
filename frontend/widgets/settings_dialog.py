@@ -2,19 +2,27 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Signal, Qt
-from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
+from copy import deepcopy
+from pathlib import Path
+
+from PySide6.QtCore import QSize, Signal, Qt, QEvent
+from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap
 from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
     QDialogButtonBox,
+    QFileDialog,
     QFrame,
     QGridLayout,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QMenu,
+    QMessageBox,
     QPushButton,
+    QScrollArea,
     QVBoxLayout,
+    QWidget,
 )
 
 from app.state import AppState
@@ -223,6 +231,7 @@ class SettingsDialog(QDialog):
     def __init__(self, state: AppState, parent=None) -> None:
         super().__init__(parent)
         self.state = state
+        self._attendance_config = self._load_attendance_config()
         self._capture_saved_state()
         # Expose current theme to allow QSS selectors like #SettingsDialog[theme="dark"]
         self.setProperty("theme", self.state.theme)
@@ -234,7 +243,7 @@ class SettingsDialog(QDialog):
         self.setObjectName("SettingsDialog")
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
-        self.setMinimumWidth(640)
+        self._apply_responsive_size(parent)
         # 构建 UI：将所有控件分组并布局到对话框中
         # 这里把 UI 构建逻辑单独放在 `_build_ui`，便于维护和测试
         self._build_ui()
@@ -261,6 +270,74 @@ class SettingsDialog(QDialog):
         top.addStretch(1)
         top.addWidget(close_button)
 
+        personal_group = self._group("个人信息")
+        personal_layout = QGridLayout(personal_group)
+        personal_layout.setContentsMargins(14, 14, 14, 14)
+        personal_layout.setHorizontalSpacing(12)
+        personal_layout.setVerticalSpacing(8)
+        personal_layout.setColumnMinimumWidth(0, self._personal_label_width())
+        personal_layout.setColumnStretch(0, 0)
+        personal_layout.setColumnStretch(1, 0)
+        personal_layout.setColumnStretch(2, 0)
+        personal_layout.setColumnStretch(3, 1)
+        personal_title = QLabel("个人信息")
+        personal_title.setObjectName("SettingsGroupTitle")
+        personal_note = QLabel("个人信息仅保存在此设备上，不会上传至任何服务器，请放心使用。")
+        personal_note.setObjectName("SettingNote")
+        personal_note.setWordWrap(True)
+
+        self.position_input = self._setting_input(self._config_value("common", "position"))
+        self.evection_username_input = self._setting_input(self._config_value("evection", "username"))
+        self.evection_password_input = self._setting_input(self._config_value("evection", "password"), password=True)
+        self._set_short_field_width(self.evection_username_input)
+        self._set_short_field_width(self.evection_password_input)
+        evection_password_field = self._password_field(self.evection_password_input)
+        self.pjmn_username_input = self._setting_input(self._config_value("pjmn", "username"))
+        self.pjmn_password_input = self._setting_input(self._config_value("pjmn", "password"), password=True)
+        self._set_short_field_width(self.pjmn_username_input)
+        self._set_short_field_width(self.pjmn_password_input)
+        pjmn_password_field = self._password_field(self.pjmn_password_input)
+        self.attendance_username_input = self._setting_input(self._config_value("attendance", "username"))
+        self.attendance_password_input = self._setting_input(self._config_value("attendance", "password"), password=True)
+        self._set_short_field_width(self.attendance_username_input)
+        self._set_short_field_width(self.attendance_password_input)
+        attendance_password_field = self._password_field(self.attendance_password_input)
+        self.output_dir_input = self._setting_input(self._config_value("common", "outputDir"))
+        browse_output_button = QPushButton("选择")
+        browse_output_button.setObjectName("BrowseOutputButton")
+        browse_output_button.setFixedWidth(58)
+        browse_output_button.clicked.connect(self._choose_output_dir)
+
+        personal_layout.addWidget(personal_title, 0, 0, 1, 4)
+        personal_layout.addWidget(personal_note, 1, 0, 1, 4)
+        self._add_personal_row(personal_layout, 2, "职名", self.position_input)
+        self._add_personal_pair_row(
+            personal_layout,
+            3,
+            "禀议系统",
+            self.evection_username_input,
+            evection_password_field,
+        )
+        self._add_personal_pair_row(
+            personal_layout,
+            4,
+            "PJCOST系统",
+            self.pjmn_username_input,
+            pjmn_password_field,
+        )
+        self._add_personal_pair_row(
+            personal_layout,
+            5,
+            "考勤系统",
+            self.attendance_username_input,
+            attendance_password_field,
+        )
+        output_layout = QHBoxLayout()
+        output_layout.setSpacing(8)
+        output_layout.addWidget(self.output_dir_input, stretch=1)
+        output_layout.addWidget(browse_output_button)
+        self._add_personal_row(personal_layout, 6, "输出路径", output_layout)
+
         theme_group = self._group("界面主题")
         theme_layout = QGridLayout(theme_group)
         theme_layout.setContentsMargins(14, 14, 14, 14)
@@ -270,9 +347,11 @@ class SettingsDialog(QDialog):
         theme_title.setObjectName("SettingsGroupTitle")
 
         self.theme_select = ArrowComboBox(THEME_OPTIONS, self.state.theme)
+        self.theme_select.setFixedWidth(self._pair_field_width())
         self.theme_select.current_changed.connect(self._preview_state)
 
         self.font_select = ArrowComboBox(FONT_OPTIONS, self.state.font_size)
+        self.font_select.setFixedWidth(self._pair_field_width())
         self.font_select.current_changed.connect(self._preview_state)
 
         theme_layout.addWidget(theme_title, 0, 0, 1, 2)
@@ -280,6 +359,10 @@ class SettingsDialog(QDialog):
         theme_layout.addWidget(self.theme_select, 1, 1)
         theme_layout.addWidget(QLabel("字体大小"), 2, 0)
         theme_layout.addWidget(self.font_select, 2, 1)
+        theme_layout.setColumnMinimumWidth(0, self._personal_label_width())
+        theme_layout.setColumnStretch(0, 0)
+        theme_layout.setColumnStretch(1, 0)
+        theme_layout.setColumnStretch(2, 1)
 
         input_group = self._group("输入")
         input_layout = QVBoxLayout(input_group)
@@ -297,8 +380,8 @@ class SettingsDialog(QDialog):
         skill_layout.setContentsMargins(14, 14, 14, 14)
         skill_layout.setHorizontalSpacing(12)
         skill_layout.setVerticalSpacing(10)
-        skill_layout.setColumnMinimumWidth(0, 320)
-        skill_layout.setColumnMinimumWidth(1, 320)
+        skill_layout.setColumnStretch(0, 1)
+        skill_layout.setColumnStretch(1, 1)
         skill_title = QLabel("Skills 管理")
         skill_title.setObjectName("SettingsGroupTitle")
         skill_layout.addWidget(skill_title, 0, 0, 1, 2)
@@ -339,13 +422,29 @@ class SettingsDialog(QDialog):
         # 底部按钮区域：负责确认/完成操作。
         # 在截图中，完成/发送相关按钮位于对话框的右下角，用户点击"完成"会触发 accept()
 
-        # 将所有分组和底部按钮加入主布局，完成对话框的整体排列
+        scroll_content = QWidget()
+        scroll_content.setObjectName("SettingsScrollContent")
+        scroll_layout = QVBoxLayout(scroll_content)
+        scroll_layout.setContentsMargins(0, 0, 0, 0)
+        scroll_layout.setSpacing(12)
+        scroll_layout.addWidget(personal_group)
+        scroll_layout.addWidget(theme_group)
+        scroll_layout.addWidget(input_group)
+        scroll_layout.addWidget(skill_group)
+        scroll_layout.addWidget(suggestion_group)
+        scroll_layout.addStretch(1)
+
+        scroll_area = QScrollArea()
+        scroll_area.setObjectName("SettingsScrollArea")
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setWidget(scroll_content)
+
+        # 将顶部、可滚动内容和底部按钮加入主布局，保持弹窗原尺寸。
 
         layout.addLayout(top)
-        layout.addWidget(theme_group)
-        layout.addWidget(input_group)
-        layout.addWidget(skill_group)
-        layout.addWidget(suggestion_group)
+        layout.addWidget(scroll_area, stretch=1)
         layout.addLayout(footer_buttons)
 
     def _logout(self) -> None:
@@ -360,6 +459,184 @@ class SettingsDialog(QDialog):
         frame.setObjectName("SettingsGroup")
         frame.setProperty("title", title)
         return frame
+
+    def _apply_responsive_size(self, parent) -> None:
+        """根据设置内容宽度反推设置页宽度，避免右侧出现大片空白。"""
+        content_width = self._personal_label_width() + 12 + self._pair_field_width()
+        chrome_width = 30 * 2 + 14 * 2 + 22
+        width = content_width + chrome_width
+        if parent is not None:
+            height = int(parent.height() * 0.82)
+            width = min(width, max(560, parent.width() - 80))
+        else:
+            height = 620
+        height = max(560, min(720, height))
+        self.resize(width, height)
+        self.setFixedWidth(width)
+        self.setMinimumHeight(540)
+
+    def _load_attendance_config(self) -> dict:
+        """读取运行时配置；读取失败时使用空配置，避免设置页打不开。"""
+        if self.state.attendance_config:
+            return deepcopy(self.state.attendance_config)
+        try:
+            from backend.services.attendance_config import load_config
+
+            result = load_config()
+            self.state.attendance_config = result.config
+            return deepcopy(result.config)
+        except Exception:
+            return {
+                "version": "1.0",
+                "attendance": {"username": "", "password": "", "url": ""},
+                "pjmn": {"username": "", "password": "", "url": ""},
+                "evection": {"username": "", "password": "", "url": ""},
+                "common": {"outputDir": str(Path.home() / "Documents"), "waitMs": 7000, "position": ""},
+            }
+
+    def _config_value(self, section: str, key: str) -> str:
+        """安全读取配置字段，设置页显示用。"""
+        value = self._attendance_config.get(section, {}).get(key, "")
+        return "" if value is None else str(value)
+
+    @staticmethod
+    def _setting_input(value: str = "", password: bool = False) -> QLineEdit:
+        """创建个人信息区域使用的输入框。"""
+        line_edit = QLineEdit()
+        line_edit.setObjectName("SettingInput")
+        line_edit.setText(value)
+        line_edit.setMinimumHeight(34)
+        line_edit.setMinimumWidth(0)
+        if password:
+            line_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        return line_edit
+
+    def _personal_label_width(self) -> int:
+        """根据当前字体计算个人信息标签列宽，避免写死大间距。"""
+        return self.fontMetrics().horizontalAdvance("PJCOST系统") + 12
+
+    def _short_field_width(self) -> int:
+        """根据账号长度场景计算账号/密码框显示宽度，不限制可输入内容。"""
+        return self.fontMetrics().horizontalAdvance("0000000000000000") + 72
+
+    def _pair_field_width(self) -> int:
+        """账号列和密码列合计宽度，用于单栏字段右侧对齐。"""
+        return self._short_field_width() * 2 + 12
+
+    def _set_short_field_width(self, line_edit: QLineEdit) -> None:
+        """只缩短账号/密码子框的显示宽度，不限制输入内容长度。"""
+        line_edit.setFixedWidth(self._short_field_width())
+
+    def _add_personal_row(self, layout: QGridLayout, row: int, label_text: str, widget_or_layout) -> None:
+        """添加单字段个人信息行。"""
+        label = QLabel(label_text)
+        label.setObjectName("PersonalInfoLabel")
+        layout.addWidget(label, row, 0)
+        if isinstance(widget_or_layout, QHBoxLayout):
+            wrapper = QWidget()
+            wrapper.setFixedWidth(self._pair_field_width())
+            wrapper.setLayout(widget_or_layout)
+            layout.addWidget(wrapper, row, 1, 1, 2, Qt.AlignmentFlag.AlignLeft)
+        else:
+            widget_or_layout.setFixedWidth(self._pair_field_width())
+            layout.addWidget(widget_or_layout, row, 1, 1, 2, Qt.AlignmentFlag.AlignLeft)
+
+    def _add_personal_pair_row(
+        self,
+        layout: QGridLayout,
+        row: int,
+        label_text: str,
+        account_input: QLineEdit,
+        password_input,
+    ) -> None:
+        """添加账号/密码双字段个人信息行。"""
+        label = QLabel(label_text)
+        label.setObjectName("PersonalInfoLabel")
+        layout.addWidget(label, row, 0)
+        layout.addWidget(account_input, row, 1, Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(password_input, row, 2, Qt.AlignmentFlag.AlignLeft)
+
+    def _password_field(self, password_input: QLineEdit) -> QWidget:
+        """在密码输入框内部右侧放置小眼睛按钮。"""
+        password_input.setProperty("passwordField", True)
+        password_input.setEchoMode(QLineEdit.EchoMode.Password)
+
+        toggle = QPushButton(password_input)
+        toggle.setObjectName("PasswordPeekButton")
+        toggle.setIcon(self._eye_icon())
+        toggle.setIconSize(QSize(13, 13))
+        toggle.setFixedSize(24, 24)
+        toggle.setCursor(Qt.CursorShape.PointingHandCursor)
+        toggle.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
+        def _show_password() -> None:
+            password_input.setEchoMode(QLineEdit.EchoMode.Normal)
+
+        def _hide_password() -> None:
+            password_input.setEchoMode(QLineEdit.EchoMode.Password)
+
+        # 和 HTML 一致：按住小眼睛时显示密码，松开或移出后立即隐藏。
+        toggle.pressed.connect(_show_password)
+        toggle.released.connect(_hide_password)
+        toggle.installEventFilter(self)
+        password_input.installEventFilter(self)
+        toggle._jmate_password_input = password_input  # type: ignore[attr-defined]
+        toggle._jmate_hide_password = _hide_password  # type: ignore[attr-defined]
+        password_input._jmate_peek_button = toggle  # type: ignore[attr-defined]
+        self._position_password_button(password_input)
+        return password_input
+
+    @staticmethod
+    def _eye_icon() -> QIcon:
+        """绘制灰色小眼睛图标，避免使用彩色 emoji。"""
+        pixmap = QPixmap(18, 18)
+        pixmap.fill(Qt.GlobalColor.transparent)
+
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        pen = QPen(QColor("#9aa8bf"), 1.4)
+        painter.setPen(pen)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+
+        eye = QPainterPath()
+        eye.moveTo(3, 9)
+        eye.cubicTo(5.2, 4.9, 12.8, 4.9, 15, 9)
+        eye.cubicTo(12.8, 13.1, 5.2, 13.1, 3, 9)
+        painter.drawPath(eye)
+        painter.drawEllipse(7.0, 7.0, 4.0, 4.0)
+        painter.end()
+        return QIcon(pixmap)
+
+    @staticmethod
+    def _position_password_button(password_input: QLineEdit) -> None:
+        """把小眼睛按钮固定到输入框内部右侧。"""
+        button = getattr(password_input, "_jmate_peek_button", None)
+        if button is None:
+            return
+        x = password_input.width() - button.width() - 7
+        y = (password_input.height() - button.height()) // 2
+        button.move(max(0, x), max(0, y))
+
+    def eventFilter(self, watched, event) -> bool:
+        """密码显示按钮移出或失焦时隐藏密码。"""
+        if isinstance(watched, QLineEdit) and event.type() == QEvent.Type.Resize:
+            self._position_password_button(watched)
+        if getattr(watched, "objectName", lambda: "")() == "PasswordPeekButton" and event.type() in (
+            QEvent.Type.Leave,
+            QEvent.Type.FocusOut,
+            QEvent.Type.MouseButtonRelease,
+        ):
+            hide_password = getattr(watched, "_jmate_hide_password", None)
+            if hide_password:
+                hide_password()
+        return super().eventFilter(watched, event)
+
+    def _choose_output_dir(self) -> None:
+        """选择输出路径。"""
+        current_dir = self.output_dir_input.text().strip() or str(Path.home() / "Documents")
+        selected = QFileDialog.getExistingDirectory(self, "选择输出路径", current_dir)
+        if selected:
+            self.output_dir_input.setText(selected)
 
     def _apply_theme(self, theme: str) -> None:
         """Apply theme-wide QSS to the settings dialog and its children.
@@ -391,6 +668,13 @@ class SettingsDialog(QDialog):
         QDialog#SettingsDialog {{
             background: transparent;
         }}
+        QScrollArea#SettingsScrollArea {{
+            background: transparent;
+            border: none;
+        }}
+        QWidget#SettingsScrollContent {{
+            background: transparent;
+        }}
         QFrame#SettingsGroup {{
             background: {group_bg};
             border: 1px solid {group_border};
@@ -412,8 +696,26 @@ class SettingsDialog(QDialog):
         QLabel#SettingNote {{
             color: {note_color};
         }}
+        QLabel#PersonalInfoLabel {{
+            color: {text_color};
+            font-weight: 400;
+        }}
+        QLineEdit#SettingInput {{
+            background: {group_bg};
+            color: {text_color};
+            border: 1px solid {group_border};
+            border-radius: 10px;
+            padding: 6px 8px;
+        }}
+        QLineEdit#SettingInput:focus {{
+            border: 1px solid #1E6DFF;
+        }}
+        QLineEdit#SettingInput[passwordField="true"] {{
+            padding-right: 34px;
+        }}
         QPushButton#CloseSettingsButton,
         QPushButton#LogoutSettingsButton,
+        QPushButton#BrowseOutputButton,
         QDialogButtonBox QPushButton {{
             background: {button_bg};
             color: {button_fg};
@@ -422,14 +724,35 @@ class SettingsDialog(QDialog):
             padding: 8px 14px;
             font-weight: 700;
         }}
+        QPushButton#BrowseOutputButton {{
+            background: {button_bg};
+            color: {button_fg};
+            border: 1px solid transparent;
+            border-radius: 10px;
+            padding: 7px 12px;
+            font-weight: 700;
+        }}
+        QPushButton#PasswordPeekButton {{
+            background: transparent;
+            color: {note_color};
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            font-weight: 400;
+        }}
         QPushButton#LogoutSettingsButton {{
             color: #c03636;
             border: 1px solid #f5c2c2;
             background: #ffffff;
         }}
         QPushButton#CloseSettingsButton:hover,
+        QPushButton#BrowseOutputButton:hover,
         QDialogButtonBox QPushButton:hover {{
             background: #0f5fe5;
+        }}
+        QPushButton#PasswordPeekButton:hover {{
+            color: {title_color};
+            background: transparent;
         }}
         QPushButton#LogoutSettingsButton:hover {{
             background: #fff5f5;
@@ -470,6 +793,7 @@ class SettingsDialog(QDialog):
         self._saved_enter_to_send = self.state.enter_to_send
         self._saved_enabled_skill_ids = set(self.state.enabled_skill_ids)
         self._saved_active_skill_id = self.state.active_skill_id
+        self._saved_personal_values = self._personal_values()
 
     def _has_unsaved_changes(self) -> bool:
         """判断当前控件值是否和上次保存的设置不同。"""
@@ -480,6 +804,7 @@ class SettingsDialog(QDialog):
             or self.enter_toggle.isChecked() != self._saved_enter_to_send
             or enabled != self._saved_enabled_skill_ids
             or self.state.active_skill_id != self._saved_active_skill_id
+            or self._personal_values() != self._saved_personal_values
         )
 
     def _confirm_discard_unsaved_changes(self) -> bool:
@@ -505,8 +830,61 @@ class SettingsDialog(QDialog):
     def _save_settings(self) -> None:
         """Keep current previewed settings and close the dialog."""
         self._update_state()
+        try:
+            self._save_attendance_config()
+        except Exception as exc:
+            QMessageBox.warning(self, "保存失败", f"个人信息保存失败：{exc}")
+            return
         self._capture_saved_state()
         super().accept()
+
+    def _personal_values(self) -> tuple[str, ...]:
+        """返回个人信息控件当前值，用于未保存变更判断。"""
+        if not hasattr(self, "position_input"):
+            config = self._attendance_config
+            return (
+                str(config.get("common", {}).get("position", "")),
+                str(config.get("evection", {}).get("username", "")),
+                str(config.get("evection", {}).get("password", "")),
+                str(config.get("pjmn", {}).get("username", "")),
+                str(config.get("pjmn", {}).get("password", "")),
+                str(config.get("attendance", {}).get("username", "")),
+                str(config.get("attendance", {}).get("password", "")),
+                str(config.get("common", {}).get("outputDir", "")),
+            )
+        return (
+            self.position_input.text().strip(),
+            self.evection_username_input.text().strip(),
+            self.evection_password_input.text(),
+            self.pjmn_username_input.text().strip(),
+            self.pjmn_password_input.text(),
+            self.attendance_username_input.text().strip(),
+            self.attendance_password_input.text(),
+            self.output_dir_input.text().strip(),
+        )
+
+    def _save_attendance_config(self) -> None:
+        """把个人信息区域写回配置文件，并同步到程序变量。"""
+        config = deepcopy(self._attendance_config)
+        config.setdefault("common", {})
+        config.setdefault("evection", {})
+        config.setdefault("pjmn", {})
+        config.setdefault("attendance", {})
+
+        config["common"]["position"] = self.position_input.text().strip()
+        config["common"]["outputDir"] = self.output_dir_input.text().strip()
+        config["evection"]["username"] = self.evection_username_input.text().strip()
+        config["evection"]["password"] = self.evection_password_input.text()
+        config["pjmn"]["username"] = self.pjmn_username_input.text().strip()
+        config["pjmn"]["password"] = self.pjmn_password_input.text()
+        config["attendance"]["username"] = self.attendance_username_input.text().strip()
+        config["attendance"]["password"] = self.attendance_password_input.text()
+
+        from backend.services.attendance_config import save_config
+
+        runtime_config = save_config(config)
+        self._attendance_config = deepcopy(runtime_config)
+        self.state.attendance_config = runtime_config
 
     def reject(self) -> None:
         """Close the dialog and discard unconfirmed preview changes."""

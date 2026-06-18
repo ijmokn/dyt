@@ -7,7 +7,7 @@ UI 不需要直接接触第三方 API。
 
 from __future__ import annotations
 
-from services.backend_client import BackendClient
+from frontend.services.backend_client import BackendClient
 from shared.protocol import LoginProvider, LoginRequest, LoginResponse
 
 

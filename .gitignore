@@ -3,7 +3,6 @@ __pycache__/
 .venv/
 venv/
 .env
-azure.env
 logs/
 installer_output
 installer

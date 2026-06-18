@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QFrame, QHBoxLayout, QScrollArea, QVBoxLayout, QWi
 
 from app.constants import CLEAR_MESSAGE, ERROR_MESSAGE, LOADING_MESSAGE, WELCOME_MESSAGE
 from app.state import AppState
-from services.chat_service import ChatService
+from frontend.services.chat_service import ChatService
 from widgets.input_bar import InputBar
 from widgets.message_bubble import MessageBubble
 

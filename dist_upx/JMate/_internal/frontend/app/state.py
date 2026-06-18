@@ -30,6 +30,7 @@ class AppState(QObject):
     theme_changed = Signal(str)
     font_size_changed = Signal(str)
     enter_to_send_changed = Signal(bool)
+    skills_enabled_changed = Signal(bool)
     active_skill_changed = Signal(object)
     enabled_skill_ids_changed = Signal(object)
     logged_in_changed = Signal(bool)
@@ -42,6 +43,7 @@ class AppState(QObject):
         self._theme: str = "default"
         self._font_size: str = "medium"
         self._enter_to_send: bool = True
+        self._skills_enabled: bool = True
         self._active_skill_id: Optional[str] = None
         self._enabled_skill_ids: Set[str] = {skill.id for skill in DEFAULT_SKILLS}
         self._logged_in: bool = False
@@ -138,6 +140,19 @@ class AppState(QObject):
             self._enter_to_send = value
             self.enter_to_send_changed.emit(value)
 
+    @property
+    def skills_enabled(self) -> bool:
+        return self._skills_enabled
+
+    @skills_enabled.setter
+    def skills_enabled(self, value: bool) -> None:
+        value = bool(value)
+        if value != self._skills_enabled:
+            self._skills_enabled = value
+            if not value:
+                self.active_skill_id = None
+            self.skills_enabled_changed.emit(value)
+
     # active skill
     @property
     def active_skill_id(self) -> Optional[str]:
@@ -183,6 +198,8 @@ class AppState(QObject):
 
     def enabled_skills(self) -> list[Skill]:
         """返回当前应该显示在主界面技能栏中的技能列表。"""
+        if not self._skills_enabled:
+            return []
         return [skill for skill in DEFAULT_SKILLS if skill.id in self._enabled_skill_ids]
 
     def active_skill_name(self) -> str:
