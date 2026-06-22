@@ -41,6 +41,8 @@ class ChatRequest:
     text: str
     active_skill_id: Optional[str] = None
     active_skill_name: str = "通用助手"
+    # 明确传递总开关状态，后端不通过技能名称推测是否启用 Skills。
+    skills_enabled: bool = True
 
 
 @dataclass(frozen=True)

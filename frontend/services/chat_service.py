@@ -28,12 +28,14 @@ class ChatService:
         user_input: str,
         active_skill_id: Optional[str],
         active_skill_name: str,
+        skills_enabled: bool = True,
     ) -> str:
         """同步获取一条后端回复，供测试或简单调用使用。"""
         request = ChatRequest(
             text=user_input,
             active_skill_id=active_skill_id,
             active_skill_name=active_skill_name,
+            skills_enabled=skills_enabled,
         )
         response = self._backend_client.send_chat(request)
         return response.text
@@ -45,13 +47,14 @@ class ChatService:
         active_skill_name: str,
         callback: Callable[[str], None],
         errback: Callable[[Exception], None] | None = None,
+        skills_enabled: bool = True,
     ) -> None:
         """在线程池中获取回复，完成后通过 callback 通知界面。"""
 
-        def _run(u: str, a_id: Optional[str], a_name: str) -> str:
-            return self.get_reply(u, a_id, a_name)
+        def _run(u: str, a_id: Optional[str], a_name: str, use_skills: bool) -> str:
+            return self.get_reply(u, a_id, a_name, use_skills)
 
-        worker = Worker(_run, user_input, active_skill_id, active_skill_name)
+        worker = Worker(_run, user_input, active_skill_id, active_skill_name, skills_enabled)
         self._workers.append(worker)
 
         def _release_worker(*_args) -> None:

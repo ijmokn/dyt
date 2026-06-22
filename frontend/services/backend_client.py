@@ -19,7 +19,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from backend.services.auth_service import BackendAuthService  # noqa: E402
-from backend.services.azure_agent import AzureAgent  # noqa: E402
+from backend.services.hub_agent import HubAgent  # noqa: E402
 from shared.protocol import ChatRequest, ChatResponse, LoginRequest, LoginResponse  # noqa: E402
 
 
@@ -47,13 +47,13 @@ class _LocalBackendAdapter:
     """
 
     def __init__(self) -> None:
-        # 程序启动时初始化 Azure Agent；点击发送时复用这个实例处理聊天请求。
-        self._agent = AzureAgent()
+        # 所有聊天请求统一进入 Hub Agent，由 Hub 判断具体处理路径。
+        self._hub_agent = HubAgent()
         self._auth_service = BackendAuthService()
 
     def send_chat(self, request: ChatRequest) -> ChatResponse:
-        """把聊天请求转发给当前 mock Agent。"""
-        return self._agent.reply(request)
+        """把聊天请求统一交给 Hub Agent 总编排。"""
+        return self._hub_agent.reply(request)
 
     def login(self, request: LoginRequest) -> LoginResponse:
         """把登录请求转发给当前 mock 认证服务。"""

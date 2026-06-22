@@ -17,6 +17,7 @@ from app.constants import APP_NAME, APP_ORGANIZATION
 from app.main_window import MainWindow
 from app.theme import apply_theme
 from backend.services.azure_agent import start_initialize_azure_agent_async
+from backend.services.hub_agent import start_initialize_hub_agent_async
 
 
 def configure_logging() -> None:
@@ -51,8 +52,11 @@ def main() -> int:
 
     apply_theme(app)
 
-    # 程序启动初始化：开后台线程初始化 Azure Agent，避免阻塞桌面窗口显示。
+    # 程序启动时分别在后台初始化普通 Azure Agent 和带 Skills 的智能体，
+    # 避免网络连接、身份认证及 Skill 扫描阻塞桌面窗口显示。
+    start_initialize_hub_agent_async()
     start_initialize_azure_agent_async()
+
 
     window = MainWindow()
     window.show()

@@ -75,7 +75,14 @@ class ChatView(QWidget):
 
         active_skill_id = self.state.active_skill_id if self.state.skills_enabled else None
         active_skill_name = self.state.active_skill_name() if self.state.skills_enabled else "通用助手"
-        self.chat_service.get_reply_async(text, active_skill_id, active_skill_name, _on_reply, _on_error)
+        self.chat_service.get_reply_async(
+            text,
+            active_skill_id,
+            active_skill_name,
+            _on_reply,
+            _on_error,
+            skills_enabled=self.state.skills_enabled,
+        )
 
     def _clear_conversation(self) -> None:
         """Clear all bubbles and restore a friendly assistant message."""
