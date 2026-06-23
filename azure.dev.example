@@ -1,0 +1,9 @@
+# JMate Azure AD 认证配置示例。
+# 复制为 azure.env 后填写真实值；不要提交真实 secret。
+AZURE_CLIENT_ID=
+AZURE_TENANT_ID=
+AZURE_CLIENT_SECRET=
+FOUNDRY_PROJECT_ENDPOINT=https://your-resource.services.ai.azure.com/api/projects/your-project
+FOUNDRY_MODEL=gpt-5
+FOUNDRY_AGENT_NAME=your-agent-name
+FOUNDRY_AGENT_VERSION=1
