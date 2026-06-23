@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import ntpath
 import shutil
 import sys
 from copy import deepcopy
@@ -12,7 +13,10 @@ from typing import Any
 
 from .crypto_service import decrypt_text, encrypt_text
 
-CONFIG_FILE_NAME = "attendance-config.json"
+CONFIG_FILE_NAME = ".attendance-config.json"
+
+# 密码写入 JSON 文件时的加密开关：True 保存密文，False 保存明文。
+ENCRYPT_PASSWORD_ON_SAVE = False
 
 
 class AttendanceConfigError(Exception):
@@ -47,9 +51,20 @@ def user_config_path() -> Path:
 
 
 def default_output_dir() -> str:
-    """返回当前用户文档目录；不存在时退回用户目录。"""
-    documents = Path.home() / "Documents"
-    return str(documents if documents.exists() else Path.home())
+    """返回当前用户文档目录。"""
+    return str(Path.home() / "Documents")
+
+
+def normalize_windows_path(path_value: str) -> str:
+    """把输出目录统一为 Windows 反斜杠路径。
+
+    Python 内存中的路径使用单个反斜杠；写入 JSON 后会按 JSON 规范显示为
+    `D:\\xxx\\ss`，从而保证配置文件中的路径格式一致。
+    """
+    value = str(path_value or "").strip()
+    if not value:
+        return ""
+    return ntpath.normpath(value.replace("/", "\\"))
 
 
 def build_pjmn_username(member_id: str) -> str:
@@ -74,34 +89,11 @@ def _write_json(path: Path, data: dict[str, Any]) -> None:
 
 
 def _base_config() -> dict[str, Any]:
-    """读取默认模板；模板缺失时使用内置兜底结构。"""
+    """读取项目随包携带的唯一默认配置模板。"""
     path = default_config_path()
-    if path.exists():
-        return _read_json(path)
-
-    return {
-        "version": "1.0",
-        "attendance": {
-            "username": "",
-            "password": "",
-            "url": "http://adacodalian.ajis-group.com.cn/AdacoWeb/login",
-        },
-        "pjmn": {
-            "username": "",
-            "password": "",
-            "url": "http://172.20.151.1/pjmn/",
-        },
-        "evection": {
-            "username": "",
-            "password": "",
-            "url": "http://ajis-dlserver/EVECTION",
-        },
-        "common": {
-            "outputDir": "",
-            "waitMs": 7000,
-            "position": "",
-        },
-    }
+    if not path.exists():
+        raise AttendanceConfigError(f"缺少默认配置模板：{path}")
+    return _read_json(path)
 
 
 def _ensure_sections(config: dict[str, Any]) -> dict[str, Any]:
@@ -114,6 +106,9 @@ def _ensure_sections(config: dict[str, Any]) -> dict[str, Any]:
         merged["version"] = config["version"]
     if not merged["common"].get("outputDir"):
         merged["common"]["outputDir"] = default_output_dir()
+    merged["common"]["outputDir"] = normalize_windows_path(
+        str(merged["common"].get("outputDir", ""))
+    )
     return merged
 
 
@@ -123,12 +118,12 @@ def ensure_user_config_exists() -> Path:
     if target.exists():
         return target
 
+    # 首次启动时直接复制当前默认模板。
     source = default_config_path()
-    if source.exists():
-        shutil.copyfile(source, target)
-        config = _ensure_sections(_read_json(target))
-    else:
-        config = _ensure_sections({})
+    if not source.exists():
+        raise AttendanceConfigError(f"缺少默认配置模板：{source}")
+    shutil.copyfile(source, target)
+    config = _ensure_sections(_read_json(target))
     _write_json(target, config)
     return target
 
@@ -168,11 +163,16 @@ def load_config() -> AttendanceConfigLoadResult:
 
 
 def save_config(config: dict[str, Any]) -> dict[str, Any]:
-    """保存配置到用户目录，文件中密码为密文，返回运行时明文配置。"""
-    encrypted = encrypt_passwords(config)
+    """按照代码级开关保存密码，并返回运行时使用的明文配置。"""
+    prepared = _ensure_sections(config)
+    stored_config = (
+        encrypt_passwords(prepared)
+        if ENCRYPT_PASSWORD_ON_SAVE
+        else decrypt_passwords(prepared)
+    )
     path = user_config_path()
-    _write_json(path, encrypted)
-    return decrypt_passwords(encrypted)
+    _write_json(path, stored_config)
+    return decrypt_passwords(stored_config)
 
 
 def build_login_config(member_id: str, current_config: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -184,12 +184,15 @@ def build_login_config(member_id: str, current_config: dict[str, Any] | None = N
     config = _ensure_sections(current_config or {})
     pjmn_username = build_pjmn_username(member_id)
 
+    # 禀议系统：账号使用登录社员号，初始密码保持为空。
     config["evection"]["username"] = member_id
-    config["evection"]["password"] = "12345678"
+    config["evection"]["password"] = ""
 
+    # PJCOST：账号去掉社员号倒数第 2 位，密码与派生账号一致。
     config["pjmn"]["username"] = pjmn_username
     config["pjmn"]["password"] = pjmn_username
 
+    # 考勤系统：账号和密码都使用登录社员号。
     config["attendance"]["username"] = member_id
     config["attendance"]["password"] = member_id
 

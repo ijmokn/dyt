@@ -54,8 +54,9 @@ def main() -> int:
 
     # 程序启动时分别在后台初始化普通 Azure Agent 和带 Skills 的智能体，
     # 避免网络连接、身份认证及 Skill 扫描阻塞桌面窗口显示。
+    # 目前挂载 hub_agent
     start_initialize_hub_agent_async()
-    start_initialize_azure_agent_async()
+    # start_initialize_azure_agent_async()
 
 
     window = MainWindow()

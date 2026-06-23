@@ -246,7 +246,7 @@ async def main_async():
         print('    "url": "http://adacodalian.ajis-group.com.cn/AdacoWeb/login"')
         print("  },")
         print('  "common": {')
-        print('    "outputDir": "D:\\\\report",')
+        print('    "outputDir": "D:\\\\xxx\\\\ss",')
         print('    "waitMs": 7000')
         print("  }")
         print("}")

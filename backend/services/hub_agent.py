@@ -150,6 +150,9 @@ def _hub_runtime_main() -> None:
     """在桌面程序专用后台线程中运行 Hub Agent。"""
     global _event_loop
 
+    # PySide6 使用 Qt 自己的事件循环管理桌面界面，而 Hub Agent 的网络请求
+    # 和工具调用是异步操作。因此在后台线程中单独创建 asyncio loop，负责
+    # 执行这些异步任务，避免等待 Azure 响应时阻塞桌面窗口。
     loop = asyncio.new_event_loop()
     _event_loop = loop
     asyncio.set_event_loop(loop)

@@ -35,7 +35,7 @@ playwright install chromium
        "password": "你的密码"
      },
      "common": {
-       "outputDir": "D:\\report"
+       "outputDir": "D:\\xxx\\ss"
      }
    }
    ```
