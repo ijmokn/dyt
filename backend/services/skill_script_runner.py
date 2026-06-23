@@ -1,13 +1,39 @@
-"""本地文件型 Skill 的脚本执行入口。"""
+"""本地文件型 Skill 的脚本执行入口。
+
+本文件保留 Agent Framework 示例执行器的主体结构，只负责在执行脚本前
+选择 Python 解释器：源码开发时使用当前虚拟环境，打包后使用 JMate 安装
+目录中的私有 Python；也可以通过环境变量临时指定其他 Python 路径。
+"""
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
 from agent_framework import FileSkill, FileSkillScript
+
+SKILL_PYTHON_ENV = "JMATE_SKILL_PYTHON"
+BUNDLED_PYTHON_PATH = Path("runtime") / "python" / "python.exe"
+
+
+def resolve_skill_python() -> Path:
+    """选择 Skill 使用的 Python，保持脚本执行主流程不变。
+
+    可通过 JMATE_SKILL_PYTHON 指定路径；未指定时，开发环境使用当前
+    Python，打包环境使用 JMate.exe 同目录下的私有 Python。
+    """
+    configured_path = os.environ.get(SKILL_PYTHON_ENV, "").strip()
+    if configured_path:
+        return Path(configured_path).expanduser().resolve()
+
+    if getattr(sys, "frozen", False):
+        install_root = Path(sys.executable).resolve().parent
+        return install_root / BUNDLED_PYTHON_PATH
+
+    return Path(sys.executable).resolve()
 
 
 def subprocess_script_runner(
@@ -28,7 +54,11 @@ def subprocess_script_runner(
     if args is not None and not isinstance(args, list):
         raise TypeError("文件型 Skill 的脚本参数必须是字符串列表")
 
-    command = [sys.executable, str(script_path)]
+    # 只替换 Python 路径来源，其余执行逻辑保持后端示例原样。
+    python_executable = resolve_skill_python()
+    if not python_executable.is_file():
+        return f"错误：未找到 Skill Python：{python_executable}"
+    command = [str(python_executable), str(script_path)]
     for item in args or []:
         if not isinstance(item, str):
             raise TypeError("文件型 Skill 的每个脚本参数都必须是字符串")

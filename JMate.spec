@@ -1,22 +1,45 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_dynamic_libs
+from PyInstaller.utils.hooks import collect_all, collect_dynamic_libs
 
 binaries = []
 binaries += collect_dynamic_libs('shiboken6')
+
+datas = [
+    ('frontend', 'frontend'),
+    ('shared', 'shared'),
+    ('backend', 'backend'),
+    ('azure.env', '.'),
+    ('.attendance-config.json', '.'),
+]
+
+hiddenimports = [
+    'shiboken6.Shiboken',
+    'PySide6.QtCore',
+    'PySide6.QtGui',
+    'PySide6.QtWidgets',
+    'cryptography',
+    'cryptography.fernet',
+]
+
+# Agent Framework 的 Foundry/OpenAI 扩展包含动态导入，PyInstaller 静态分析
+# 无法完整发现，因此显式收集三个包的数据文件、二进制和隐藏模块。
+for package in (
+    'agent_framework',
+    'agent_framework_foundry',
+    'agent_framework_openai',
+):
+    package_datas, package_binaries, package_hiddenimports = collect_all(package)
+    datas += package_datas
+    binaries += package_binaries
+    hiddenimports += package_hiddenimports
 
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=binaries,
-    datas=[
-        ('frontend', 'frontend'),
-        ('shared', 'shared'),
-        ('backend', 'backend'),
-        ('azure.env', '.'),
-        ('.attendance-config.json', '.'),
-    ],
-    hiddenimports=['shiboken6.Shiboken', 'PySide6.QtCore', 'PySide6.QtGui', 'PySide6.QtWidgets'],
+    datas=datas,
+    hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
