@@ -1,0 +1,179 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "generatedFrom": [
+      "client-base-project-generator",
+      "client-QRScanner"
+    ],
+    "clientCode": "60236",
+    "clientName": "testClient",
+    "description": "自动生成客户专属 Android base 工程，并集成二维码扫描功能"
+  },
+  "operations": [
+    {
+      "id": "step-1",
+      "type": "fs_delete",
+      "description": "删除已存在的目标项目目录",
+      "params": {
+        "path": "temp/{code}",
+        "recursive": true
+      },
+      "dependsOn": []
+    },
+    {
+      "id": "step-2",
+      "type": "fs_copy",
+      "description": "克隆 clientTemple 项目到目标目录",
+      "params": {
+        "source": "assets/clientTemple",
+        "target": "temp/{code}",
+        "overwrite": true
+      },
+      "dependsOn": [
+        "step-1"
+      ]
+    },
+    {
+      "id": "step-3",
+      "type": "text_replace",
+      "description": "替换 AndroidManifest.xml 中的客户代码 XXXXX",
+      "params": {
+        "path": "temp/{code}/app/src/main/AndroidManifest.xml",
+        "find": "XXXXX",
+        "replace": "{code}",
+        "isRegex": false,
+        "all": true
+      },
+      "dependsOn": [
+        "step-2"
+      ]
+    },
+    {
+      "id": "step-4",
+      "type": "text_replace",
+      "description": "替换 AndroidManifest.xml 中的客户名称 YYYYYY",
+      "params": {
+        "path": "temp/{code}/app/src/main/AndroidManifest.xml",
+        "find": "YYYYYY",
+        "replace": "{name}",
+        "isRegex": false,
+        "all": true
+      },
+      "dependsOn": [
+        "step-3"
+      ]
+    },
+    {
+      "id": "step-5",
+      "type": "text_replace",
+      "description": "替换 build.gradle 中的客户代码 XXXXX",
+      "params": {
+        "path": "temp/{code}/app/build.gradle",
+        "find": "XXXXX",
+        "replace": "{code}",
+        "isRegex": false,
+        "all": true
+      },
+      "dependsOn": [
+        "step-2"
+      ]
+    },
+    {
+      "id": "step-6",
+      "type": "text_replace",
+      "description": "修改 build.gradle 中的 versionName",
+      "params": {
+        "path": "temp/{code}/app/build.gradle",
+        "find": "versionName \"1.0\"",
+        "replace": "versionName \"0.10\"",
+        "isRegex": false,
+        "all": false
+      },
+      "dependsOn": [
+        "step-5"
+      ]
+    },
+    {
+      "id": "step-7",
+      "type": "fs_delete",
+      "description": "删除旧版本 AAR 文件",
+      "params": {
+        "path": "temp/{code}/app/libs/general_1.27.aar",
+        "recursive": false
+      },
+      "dependsOn": [
+        "step-2"
+      ]
+    },
+    {
+      "id": "step-8",
+      "type": "fs_copy",
+      "description": "复制新版本 AAR 文件到 libs 目录",
+      "params": {
+        "source": "assets/general_2.23.aar",
+        "target": "temp/{code}/app/libs/general_2.23.aar",
+        "overwrite": true
+      },
+      "dependsOn": [
+        "step-7"
+      ]
+    },
+    {
+      "id": "step-9",
+      "type": "text_replace",
+      "description": "更新 build.gradle 中的 AAR 依赖版本",
+      "params": {
+        "path": "temp/{code}/app/build.gradle",
+        "find": "provided files('libs/general_1.27.aar')",
+        "replace": "provided files('libs/general_2.23.aar')",
+        "isRegex": false,
+        "all": false
+      },
+      "dependsOn": [
+        "step-8"
+      ]
+    },
+    {
+      "id": "step-10",
+      "type": "java_build_subclass",
+      "description": "生成 Customize{code}.java 文件并实现 setScannerType 方法",
+      "params": {
+        "path": "temp/{code}/app/src/main/java/com/ajis/aisad/client/Customize{code}.java",
+        "packageName": "com.ajis.aisad.client",
+        "className": "Customize{code}",
+        "extendsClass": "Customize",
+        "imports": [
+          "com.ajis.general.common.AISTool",
+          "com.ajis.general.common.Customize",
+          "com.ajis.general.common.ComMacro",
+          "com.ajis.general.data.DataBase",
+          "com.ajis.general.data.DataUsrfil",
+          "com.ajis.general.manager.MiddlewareManager",
+          "com.ajis.general.model.ModeBuilder",
+          "com.ajis.middleware.adbcinterface.BarcodeSetConfig",
+          "com.ajis.middleware.adbcinterface.IBarcodeOperation",
+          "com.ajis.middleware.adiointerface.IIOOperation"
+        ],
+        "methods": [
+          "@Override\n    public void setScannerType() {\n        IBarcodeOperation barcode = null;\n        barcode = MiddlewareManager.getSingleton(sContext).getBarcodeOperationInterface();\n        DataBase database = null;\n        database = ModeBuilder.getInstance().getModeData();\n\n        int codeType = 0;\n        boolean skuAddon = true;\n        String temp = \"\";\n        int eanFlg = DataUsrfil.getInstance().getEanFlg();\n        int nw7Flg = DataUsrfil.getInstance().getNw7Flg();\n        int cod39Flg = DataUsrfil.getInstance().getCode39Flg();\n        int unLimitFlg = DataUsrfil.getInstance().getUnlmtCode();\n        int scannerType = barcode.adbcGetScannerType();\n\n        BarcodeSetConfig bcrConfig = new BarcodeSetConfig(scannerType);\n\n        if(eanFlg == 0 && nw7Flg == 0 && cod39Flg == 0 && unLimitFlg == 0) {\n            codeType = IBarcodeOperation.ADBC_CODETYPE_EAN\n                    | IBarcodeOperation.ADBC_CODETYPE_CODE39\n                    | IBarcodeOperation.ADBC_CODETYPE_NW7\n                    | IBarcodeOperation.ADBC_CODETYPE_CODE128\n                    | IBarcodeOperation.ADBC_CODETYPE_EAN128\n                    | IBarcodeOperation.ADBC_CODETYPE_Industrial2of5\n                    | IBarcodeOperation.ADBC_CODETYPE_CODE93\n                    | IBarcodeOperation.ADBC_CODETYPE_ITF\n                    | IBarcodeOperation.ADBC_CODETYPE_PDF\n                    | IBarcodeOperation.ADBC_CODETYPE_QR\n                    | IBarcodeOperation.ADBC_CODETYPE_DATAMATRIX\n                    | IBarcodeOperation.ADBC_CODETYPE_DATABAR\n                    | IBarcodeOperation.ADBC_CODETYPE_COMPOSITE;\n        } else {\n            if (unLimitFlg == 1) {\n                codeType = IBarcodeOperation.ADBC_CODETYPE_EAN\n                        | IBarcodeOperation.ADBC_CODETYPE_CODE39\n                        | IBarcodeOperation.ADBC_CODETYPE_NW7\n                        | IBarcodeOperation.ADBC_CODETYPE_CODE128\n                        | IBarcodeOperation.ADBC_CODETYPE_EAN128\n                        | IBarcodeOperation.ADBC_CODETYPE_Industrial2of5\n                        | IBarcodeOperation.ADBC_CODETYPE_CODE93\n                        | IBarcodeOperation.ADBC_CODETYPE_ITF;\n            } else {\n                if (eanFlg == 1) {\n                    codeType = codeType | IBarcodeOperation.ADBC_CODETYPE_EAN\n                             | IBarcodeOperation.ADBC_CODETYPE_ITF;\n                }\n\n                if (nw7Flg == 1) {\n                    codeType = codeType | IBarcodeOperation.ADBC_CODETYPE_NW7;\n                }\n\n                if (cod39Flg == 1) {\n                    codeType = codeType | IBarcodeOperation.ADBC_CODETYPE_CODE39;\n                }\n            }\n\n            codeType = codeType | IBarcodeOperation.ADBC_CODETYPE_QR;\n\n            if (DataUsrfil.getInstance().getwkmode() == ComMacro.MODE_SKU) {\n                skuAddon = false;\n                temp = DataUsrfil.getInstance().getSku1Num();\n\n                if (temp.length() == 16) {\n                    int len = 0;\n                    for (int i = 0; i < 8; i++) {\n                        len = AISTool.stringToInt(temp.substring(i * 2, i * 2 + 2));\n\n                        if (len == 18) {\n                            skuAddon = true;\n                            break;\n                        }\n                    }\n                }\n            }\n\n            if(scannerType == IBarcodeOperation.ADBC_SCANNER_HONEY) {\n                if (database.getCurScanMode() == IBarcodeOperation.ADBC_READMODE_MULTI\n                        || database.getCurScanMode() == IBarcodeOperation.ADBC_READMODE_MIXED) {\n                    skuAddon = false;\n                }\n            }\n\n            if (!skuAddon) {\n                bcrConfig.mBcrConfigEAN.mBcrConfigEAN13.mAddonNum = 0;\n                bcrConfig.mBcrConfigEAN.mBcrConfigEAN8.mAddonNum = 0;\n                bcrConfig.mBcrConfigEAN.mBcrConfigUPCA.mAddonNum = 0;\n                bcrConfig.mBcrConfigEAN.mBcrConfigUPCE0.mAddonNum = 0;\n            } else {\n                bcrConfig.mBcrConfigEAN.mBcrConfigEAN13.mAddonNum = BarcodeSetConfig.ADBC_BCRSET_ANNON_2\n                        | BarcodeSetConfig.ADBC_BCRSET_ANNON_5;\n                bcrConfig.mBcrConfigEAN.mBcrConfigEAN8.mAddonNum = BarcodeSetConfig.ADBC_BCRSET_ANNON_2\n                        | BarcodeSetConfig.ADBC_BCRSET_ANNON_5;\n                bcrConfig.mBcrConfigEAN.mBcrConfigUPCA.mAddonNum = BarcodeSetConfig.ADBC_BCRSET_ANNON_2\n                        | BarcodeSetConfig.ADBC_BCRSET_ANNON_5;\n                bcrConfig.mBcrConfigEAN.mBcrConfigUPCE0.mAddonNum = BarcodeSetConfig.ADBC_BCRSET_ANNON_2\n                        | BarcodeSetConfig.ADBC_BCRSET_ANNON_5;\n            }\n\n            bcrConfig.mBcrConfigEAN.mBcrConfigUPCA.mPrefixTransmit = true;\n            bcrConfig.mBcrConfigEAN.mBcrConfigUPCE0.mPrefixTransmit = false;\n\n            bcrConfig.mBcrConfigCode39.mStartStopFlag = false;\n            bcrConfig.mBcrConfigCode39.mCDCheck = false;\n            bcrConfig.mBcrConfigCode39.mCDTransmit = false;\n\n            bcrConfig.mBcrConfigNW7.mStartStopFlag = false;\n            bcrConfig.mBcrConfigNW7.mCDCheck = false;\n            bcrConfig.mBcrConfigNW7.mCDTransmit = false;\n\n            bcrConfig.mBcrConfigITF.mCDCheck = false;\n            bcrConfig.mBcrConfigITF.mCDTransmit = false;\n\n            bcrConfig.mBcrConfigCode93.mCDCheck = true;\n            bcrConfig.mBcrConfigCode93.mCDTransmit = false;\n\n            bcrConfig.mBcrConfigCode128.mCDCheck = false;\n            bcrConfig.mBcrConfigCode128.mCDTransmit = false;\n\n            bcrConfig.mBcrConfigEAN128.mCDCheck = false;\n            bcrConfig.mBcrConfigEAN128.mCDTransmit = false;\n\n            if(!database.getITF()) {\n                bcrConfig.mBcrConfigITF.mMinLength = 5;\n                bcrConfig.mBcrConfig2of5.mMinLength = 5;\n            }\n        }\n\n        if(scannerType == IBarcodeOperation.ADBC_SCANNER_HONEY) {\n            try {\n                IIOOperation ioOperation = MiddlewareManager.getSingleton(sContext).getIOOperationInterface();\n                String centerPosition = ioOperation.adioGetHoneyCenterValue();\n                barcode.adbcSetScannerCenterWindow(centerPosition);\n            } catch (Exception e) {\n\n            }\n        }\n\n        barcode.adbcSetBarcodeSetConfig(bcrConfig);\n        barcode.adbcSetScannerType(codeType);\n        barcode.adbcSetScannerTimerOut(5000);\n        barcode.adbcSetScannerMode(database.getInitScanMode());\n\n        setMultiPrefix();\n    }"
+        ],
+        "keepOpen": false
+      },
+      "dependsOn": [
+        "step-2"
+      ]
+    }
+  ],
+  "validation": {
+    "requiredFiles": [
+      "assets/clientTemple",
+      "assets/general_2.23.aar"
+    ],
+    "outputFiles": [
+      "temp/{code}/app/src/main/AndroidManifest.xml",
+      "temp/{code}/app/build.gradle",
+      "temp/{code}/app/libs/general_2.23.aar",
+      "temp/{code}/app/src/main/java/com/ajis/aisad/client/Customize{code}.java"
+    ]
+  }
+}

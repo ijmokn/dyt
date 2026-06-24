@@ -1,3 +1,24 @@
-PySide6>=6.7.0
-azure-ai-projects>=2.1.0
-azure-identity
+# JMate 运行环境建议使用 Python 3.12（64 位）。
+
+# PySide6 桌面界面
+PySide6>=6.7.0,<7.0
+
+# Azure Foundry 项目与 AD 认证
+azure-ai-projects>=2.2.0,<3.0
+azure-identity>=1.19.0,<2.0
+
+# Agent Framework：Hub Agent、Foundry 托管 Agent 与本地 Skills
+agent-framework-core>=1.9.0,<2.0
+agent-framework-foundry>=1.8.2,<2.0
+agent-framework-openai>=1.8.2,<2.0
+
+# 环境配置和密码加密
+python-dotenv>=1.0.1,<2.0
+cryptography>=48.0.1,<49.0
+
+# 考勤导出 Skill 的浏览器自动化
+# 安装依赖后还需执行：python -m playwright install chromium
+playwright>=1.60.0,<2.0
+
+# EXE 构建工具
+PyInstaller>=6.20.0,<7.0
